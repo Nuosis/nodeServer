@@ -1,0 +1,5 @@
+PROCESS
+
+user drops file in container >> upload to AWS
+send url in api call
+
