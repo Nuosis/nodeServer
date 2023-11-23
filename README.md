@@ -12,7 +12,7 @@ TO MOVE/RECREATE
 	if self hosted, set up launchctl 
 	1) create com.clarity.webhook.plist at /library/launchdaemons/ (copy one from here)
 	2) load it 
-	3) update ENV VARIABLES section to house all local variables needed
+	3) update ENV VARIABLES section to house all local variables needed (Add to plist created 5.1 if using launchctl)
 6) set up port forwarding
 7) set up SSL 
 
@@ -40,3 +40,25 @@ Xlsx to Json
 curl -X POST http://localhost:4040/convert-xlsx-to-json -H "Content-Type: application/json" -d '{"fileUrl": <URL TO XLSX FILE>, "formName": "Tiercon"}'
     AVAILABLE FORM NAMES
     - Tiercon
+
+
+SQLite DataBase
+# Access
+const dbPath = './mydb.sqlite';
+
+openDatabase(dbPath)
+  .then(db => {
+    // Database operations go here
+    // ...
+
+    // Don't forget to close the database connection when done
+    db.close(err => {
+      if (err) {
+        console.error(err.message);
+      }
+      console.log('Closed the database connection.');
+    });
+  })
+  .catch(err => {
+    console.error('Failed to open database:', err);
+  });

@@ -10,7 +10,7 @@ async function createRecord(server, database, layout, token, params) {
     try {
         const response = await axios.post(url, params, { headers });
         // console.log('Create record verbos response:', response.data);
-      
+    
         return response.data; // Return the response data
         
         
@@ -31,7 +31,7 @@ async function findRecord(server, database, layout, token, params) {
     try {
         const response = await axios.post(url, params, { headers });
         // console.log('Create record verbos response:', response.data);
-      
+    
         return response.data; // Return the response data
         
         
@@ -47,14 +47,14 @@ async function editRecord(server, database, layout, recordID, token, params) {
 	/*
 	PAYLOAD example
 	{	
-  		"fieldData": {},
- 		 "portalData": {},
-  		"modId": "string",
- 		 "script": "string",
-  		"script.param": "string",
-  		"script.prerequest": "string",
- 		 "script.presort": "string",
-  		"script.presort.param": "string"
+        "fieldData": {},
+        "portalData": {},
+        "modId": "string",
+        "script": "string",
+        "script.param": "string",
+        "script.prerequest": "string",
+        "script.presort": "string",
+        "script.presort.param": "string"
 	}
 	*/
     const url = 'https://' + server + '/fmi/data/vLatest/databases/' + database + '/layouts/' + layout + '/records/' + recordID;
@@ -66,7 +66,7 @@ async function editRecord(server, database, layout, recordID, token, params) {
     try {
         const response = await axios.patch(url, params, { headers });
         // console.log('Create record verbos response:', response.data);
-      
+    
         return response.data; // Return the response data
         
         
@@ -81,12 +81,12 @@ async function duplicateRecord(server, database, layout, recordID, token, params
 	/*
 	PAYLOAD example
 	{
-  		"script": "string",
- 		"script.param": "string",
-  		"script.prerequest": "string",
-  		"script.prerequest.param": "string",
-  		"script.presort": "string",
-  		"script.presort.param": "string"
+        "script": "string",
+        "script.param": "string",
+        "script.prerequest": "string",
+        "script.prerequest.param": "string",
+        "script.presort": "string",
+        "script.presort.param": "string"
 	}
 	*/
     const url = 'https://' + server + '/fmi/data/vLatest/databases/' + database + '/layouts/' + layout + '/records/' + recordID;
@@ -98,7 +98,7 @@ async function duplicateRecord(server, database, layout, recordID, token, params
     try {
         const response = await axios.post(url, params, { headers });
         // console.log('Create record verbos response:', response.data);
-      
+    
         return response.data; // Return the response data
         
         
@@ -119,7 +119,7 @@ async function deleteRecord(server, database, layout, recordID, token) {
     try {
         const response = await axios.del(url, params, { headers });
         // console.log('delete record verbos response:', response.data);
-      
+    
         return response.data; // Return the response data
         
         
@@ -130,5 +130,5 @@ async function deleteRecord(server, database, layout, recordID, token) {
 };
 
 module.exports = {
-  createRecord, findRecord, editRecord, deleteRecord, duplicateRecord
+    createRecord, findRecord, editRecord, deleteRecord, duplicateRecord
 };

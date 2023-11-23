@@ -3,14 +3,17 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 const jwt = require('jsonwebtoken');
+const validator = require('validator');
+const sqlite3 = require('sqlite3').verbose();
 const { getFileMakerToken, releaseFileMakerToken } = require('./dataAPI/access');
 // const { verifyToken } = require('./auth/generateApiKey.js');
 const { createRecord, findRecord, editRecord, deleteRecord, duplicateRecord } = require('./dataAPI/functions');
 // https://server.selectjanitorial.com/fmi/data/apidoc/#tag/records (to query parameters)
-const { exec } = require('child_process');
+const { createRecordSQL, findRecordsSQL } = require('./SQLite/functions');
+const { execFile } = require('child_process');
 
 const authPrivateKey = process.env.SECRETKEY;
-console.log('privateKey:',authPrivateKey)
+// console.log('privateKey:',authPrivateKey)
 // const userName = process.env.DEVun;
 // console.log('UserName:',userName)
 // const password = process.env.DEVpw;
@@ -26,31 +29,39 @@ app.listen(process.env.PORT || 4040, () => {
 });
 
 //AUTHENTICATION
-function verifyToken(req, res, next) {
+async function verifyToken(req, res, next) {
   // Get auth header value
   const bearerHeader = req.headers['authorization'];
-  // console.log('privateKey:',authPrivateKey, "bearerHeader:",bearerHeader)
+  
   // Check if bearer is undefined
   if (typeof bearerHeader !== 'undefined') {
     // Split at the space to get token
     const bearer = bearerHeader.split(' ');
     // Get token from array
     const bearerToken = bearer[1];
-    // Verify the token
-    jwt.verify(bearerToken, authPrivateKey, (err, authData) => {
-      if (err) {
-        res.sendStatus(403); // Forbidden
-      } else {
-        // Next middleware
-        next();
-      }
-    });
-  } else {
-    // Forbidden
-    res.sendStatus(403);
+    
+    try {
+      // Verify the token
+      const decoded = await new Promise((resolve, reject) => {
+        jwt.verify(bearerToken, authPrivateKey, (err, authData) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(authData);
+          }
+        });
+      });
+  
+      // Attach decoded data to request object
+      req.user = decoded;
+  
+      // Next middleware
+      next();
+    } catch (err) {
+      res.sendStatus(403); // Forbidden
+    }
   }
 }
-
 
 /*
 EXAMPLE OF HOW TO ADD AUTHENTICATION TO ENDPOINT
@@ -59,7 +70,7 @@ app.post('/prm/twilio', verifyToken, async (req, res) => {
 });
 */
 
-// VERIFICATION END POINT
+// Hello World END POINT
 // /
 app.get('/', (req, res) => {
   res.send('Server is running!');
@@ -72,6 +83,67 @@ app.get('/validate', verifyToken, (req, res) => {
   // You can add additional checks or return user data if needed.
   res.status(200).json({ message: 'Access validated successfully' });
 });
+
+// Registration endpoint
+app.post('/register', async (req, res) => {
+  try {
+      const { username, password } = req.body;
+      if (!username || !password) {
+          return res.status(400).json({ message: 'Username and password are required' });
+      }
+
+      // Optionally, add more validation for username and password here
+      // Check if username and password are within the length limit
+      if (username.length > 32 || password.length > 32) {
+          return res.status(400).json({ message: 'Username and password appear invalid' });
+      }
+      // Call the createUser function
+      const newUser = await createUser(username, password);
+
+      res.status(201).json({ 
+          message: 'User created successfully', 
+          user: { id: newUser.id, username: newUser.username, apiKey: newUser.apiKey }
+      });
+  } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ message: 'Error in user registration' });
+  }
+});
+/*
+curl -X POST http://localhost:4040/register \
+-H "Content-Type: application/json" \
+-d '{"username": "test@example.com", "password": "yourpassword"}'
+*/
+
+app.get('/email_verification', verifyToken, (req, res) => {
+  const apiKey = req.user.apiKey;
+  findRecordsSQL('users', [{ apiKey: apiKey }])
+    .then(records => {
+      if (records.length > 0) {
+        // If records are found
+        modifyAll('users', [{ apiKey: apiKey }], { verified: 1 })
+          .then(() => {
+            // Modification successful, return success response
+            res.status(200).json({ message: 'Email verified successfully', records: records });
+          })
+          .catch(err => {
+            // Error in modification, return an error response
+            res.status(500).json({ message: 'Error in modifying records', error: err });
+          });
+      } else {
+        // If no records are found, return a not found response
+        res.status(404).json({ message: 'No records found' });
+      }
+    })
+    .catch(err => {
+      // If there's an error in finding records, return an error response
+      res.status(403).json({ message: 'Error in accessing records', error: err });
+    });
+});
+
+
+
+
 
 // PRM/TWILIO END POINT
 // /prm/twilio
@@ -147,16 +219,34 @@ app.post('/prm/twilio', async (req, res) => {
 });
 
 // XLSX toJSON SERVICE
-// //convert-xlsx-to-json
+
+// Function to sanitize inputs
+function sanitizeInput(input) {
+  // Remove or escape potentially dangerous characters
+  // This is a basic example, tailor it to your specific needs
+  return input.replace(/[^a-zA-Z0-9-_\.]/g, "");
+}
 app.post('/convert-xlsx-to-json', (req, res) => {
-  const { fileUrl, formName } = req.body;
+  let { fileUrl, formName } = req.body;
+
+  // Validate inputs
+  if (!validator.isURL(fileUrl)) {
+      return res.status(400).send('Invalid URL');
+  }
+  if (typeof formName !== 'string' || formName.trim().length === 0) {
+      return res.status(400).send('Invalid form name');
+  }
+
+  // Sanitize inputs
+  fileUrl = sanitizeInput(fileUrl);
+  formName = sanitizeInput(formName);
 
   // Provide the correct relative path to your Python script
   const scriptPath = '/Users/server/node/venv/bin/python3';
   const scriptFile = '/Users/server/node/XLSX_to_JSON/xlsx_to_json.py';
   const command = `"${scriptPath}" "${scriptFile}" "${fileUrl}" "${formName}"`;
 
-  exec(command, (error, stdout, stderr) => {
+  execFile(command, (error, stdout, stderr) => {
     // Log stdout and stderr
     console.log(`stdout: ${stdout}`);
     console.error(`stderr: ${stderr}`);
