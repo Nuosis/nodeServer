@@ -5,45 +5,52 @@ const sqlite3 = require('sqlite3').verbose();
  * 
  * @param {string} table The name of the table to insert into.
  * @param {Object} fieldValues An object containing field names as keys and their values.
+ * @returns {Promise<any[]>}  a new Promise that encapsulates the database operations.
  */
 function createRecordSQL(table, fieldValues) {
-    const dbPath = './db.sqlite';
-    const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
-        if (err) {
-            console.error('Error opening database', err);
-            return;
-        }
-        console.log('Connected to the SQLite database.');
-    });
-
-    const fields = Object.keys(fieldValues);
-    const values = Object.values(fieldValues);
-    const placeholders = fields.map(() => '?').join(', ');
-
-    const insertSQL = `INSERT INTO ${table} (${fields.join(', ')}) VALUES (${placeholders})`;
-
-    db.run(insertSQL, values, function(err) {
-        if (err) {
-            console.error('Error inserting record:', err.message);
-
-            // Attempt to identify the problematic field if the error is related to it
-            if (err.message.includes('no such column:')) {
-                const failedField = err.message.split('no such column:')[1].trim();
-                console.error(`The error is related to the field: ${failedField}`);
+    return new Promise((resolve, reject) => {
+        console.log('createRecordSQL');
+        const dbPath = './db.sqlite';
+        const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
+            if (err) {
+                console.error('Error opening database', err);
+                reject(err);
+                return;
             }
-            return;
-        }
-        console.log(`A record has been inserted with rowid ${this.lastID}`);
-    });
+            console.log('Connected to the SQLite database.');
 
-    db.close((err) => {
-        if (err) {
-            console.error('Error closing database', err);
-            return;
-        }
-        console.log('Closed the database connection.');
+            const fields = Object.keys(fieldValues);
+            const values = Object.values(fieldValues);
+            const placeholders = fields.map(() => '?').join(', ');
+
+            const insertSQL = `INSERT INTO ${table} (${fields.join(', ')}) VALUES (${placeholders})`;
+
+            db.run(insertSQL, values, function(err) {
+                if (err) {
+                    console.error('Error inserting record:', err.message);
+                    if (err.message.includes('no such column:')) {
+                        const failedField = err.message.split('no such column:')[1].trim();
+                        console.error(`The error is related to the field: ${failedField}`);
+                    }
+                    reject(err);
+                    return;
+                }
+                console.log(`A record has been inserted with rowid ${this.lastID}`);
+                resolve(this.lastID);
+
+                db.close((err) => {
+                    if (err) {
+                        console.error('Error closing database', err);
+                        reject(err);
+                        return;
+                    }
+                    console.log('Closed the database connection.');
+                });
+            });
+        });
     });
 }
+
 
 /**
  * Performs a SELECT query on the specified table with provided query conditions.

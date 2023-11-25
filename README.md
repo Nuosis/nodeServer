@@ -24,41 +24,28 @@ ENDPOINTS
 Root 
 http://localhost:4040
 
-Basic End Point
+# Basic End Point
 / (GET)
 curl -X GET http://localhost:4040
 
-Validate Auth
+# Validate Auth
 /validate (GET)
 curl --location 'http://localhost:4040/validate' --header 'Authorization: Bearer <TOKEN>'
 
-prm webhook
+# Registration endpoint
+/register (POST)
+url -X POST http://localhost:4040/register \ 
+-H "Content-Type: application/json" \
+-d '{"username": "test@example.com", "password": "yourpassword"}'
+
+# Email Verification endpoint
+/email_verification (GET)
+
+# prm webhook
 /prm/twilio (POST)
 
-Xlsx to Json
+# Xlsx to Json
 /convert-xlsx-to-json (POST)
 curl -X POST http://localhost:4040/convert-xlsx-to-json -H "Content-Type: application/json" -d '{"fileUrl": <URL TO XLSX FILE>, "formName": "Tiercon"}'
     AVAILABLE FORM NAMES
     - Tiercon
-
-
-SQLite DataBase
-# Access
-const dbPath = './mydb.sqlite';
-
-openDatabase(dbPath)
-  .then(db => {
-    // Database operations go here
-    // ...
-
-    // Don't forget to close the database connection when done
-    db.close(err => {
-      if (err) {
-        console.error(err.message);
-      }
-      console.log('Closed the database connection.');
-    });
-  })
-  .catch(err => {
-    console.error('Failed to open database:', err);
-  });

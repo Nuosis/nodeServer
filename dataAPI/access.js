@@ -2,7 +2,8 @@ const axios = require('axios');
 
 const base64Encode = function(username,password){
     const combined = username + ":" + password;
-    return btoa(combined);
+    //return btoa(combined);
+    return Buffer.from(combined).toString('base64');
 } 
 
 // https://server.selectjanitorial.com/fmi/data/apidoc
@@ -11,7 +12,6 @@ async function getFileMakerToken(server, database, userName, password) {
 
     const base64Value = base64Encode(userName, password);
     
-
     const url = 'https://'+server+'/fmi/data/vLatest/databases/'+database+'/sessions';
     const headers = {
         'Content-Type': 'application/json',
@@ -50,5 +50,5 @@ async function releaseFileMakerToken(server, database, token) {
 };
 
 module.exports = {
-  getFileMakerToken, releaseFileMakerToken
+    getFileMakerToken, releaseFileMakerToken
 };

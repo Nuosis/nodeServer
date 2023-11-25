@@ -10,6 +10,7 @@ const { getFileMakerToken, releaseFileMakerToken } = require('./dataAPI/access')
 const { createRecord, findRecord, editRecord, deleteRecord, duplicateRecord } = require('./dataAPI/functions');
 // https://server.selectjanitorial.com/fmi/data/apidoc/#tag/records (to query parameters)
 const { createRecordSQL, findRecordsSQL } = require('./SQLite/functions');
+const { createUser } = require('./users/functions');
 const { execFile } = require('child_process');
 
 const authPrivateKey = process.env.SECRETKEY;
@@ -97,6 +98,7 @@ app.post('/register', async (req, res) => {
       if (username.length > 32 || password.length > 32) {
           return res.status(400).json({ message: 'Username and password appear invalid' });
       }
+
       // Call the createUser function
       const newUser = await createUser(username, password);
 
@@ -115,6 +117,7 @@ curl -X POST http://localhost:4040/register \
 -d '{"username": "test@example.com", "password": "yourpassword"}'
 */
 
+// Email Verification endpoint
 app.get('/email_verification', verifyToken, (req, res) => {
   const apiKey = req.user.apiKey;
   findRecordsSQL('users', [{ apiKey: apiKey }])
@@ -140,10 +143,6 @@ app.get('/email_verification', verifyToken, (req, res) => {
       res.status(403).json({ message: 'Error in accessing records', error: err });
     });
 });
-
-
-
-
 
 // PRM/TWILIO END POINT
 // /prm/twilio
@@ -257,3 +256,31 @@ app.post('/convert-xlsx-to-json', (req, res) => {
     res.send(stdout);
   });
 });
+
+// Endpoint to move a saved file to webserver
+app.get('/moveToImages', verifyToken, (req, res) => {
+    const filePath = req.body.file;
+    
+    if (!filePath) {
+        return res.status(400).send('No file path provided');
+    }
+
+    exec(`/Users/server/node/moveSavedFile.sh "${filePath}"`, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`exec error: ${error}`);
+            return res.status(500).send('Script execution failed');
+        }
+        console.log(`stdout: ${stdout}`);
+        console.error(`stderr: ${stderr}`);
+        res.send('Script executed successfully');
+    });
+});
+/*
+
+curl -X POST http://localhost:4040/moveToImages \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer YOUR_TOKEN_HERE" \
+-d '{"file":"/path/to/your/file.pdf"}'
+
+
+*/

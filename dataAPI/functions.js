@@ -72,7 +72,7 @@ async function editRecord(server, database, layout, recordID, token, params) {
         
     } catch (error) {
         // console.error('Create record ERROR:', error);
-        throw- error; // Rethrow the error for the calling function to handle
+        throw error; // Rethrow the error for the calling function to handle
     }
 };
 
@@ -117,7 +117,7 @@ async function deleteRecord(server, database, layout, recordID, token) {
     };
 
     try {
-        const response = await axios.del(url, params, { headers });
+        const response = await axios.delete(url, { headers });
         // console.log('delete record verbos response:', response.data);
     
         return response.data; // Return the response data
