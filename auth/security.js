@@ -9,6 +9,13 @@ if (!authPrivateKey) {
   throw new Error('Required environmental variable SECRETKEY is undefined');
 }
 
+// Function to sanitize inputs
+function sanitizeInput(input) {
+  // Remove or escape potentially dangerous characters
+  // This is a basic example, tailor it to your specific needs
+  return input.replace(/[^a-zA-Z0-9-_\.]/g, "");
+}
+
 // Function to hash a password
 async function hashPassword(password) {
   const saltRounds = 10; // or another appropriate number
@@ -60,5 +67,6 @@ module.exports = {
   generateToken,
   decodeToken,
   hashPassword,
-  verifyPassword
+  verifyPassword,
+  sanitizeInput
 };

@@ -1,4 +1,6 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const axios = require('axios');
 const app = express();
@@ -12,19 +14,27 @@ const { createRecord, findRecord, editRecord, deleteRecord, duplicateRecord } = 
 const { createRecordSQL, findRecordsSQL } = require('./SQLite/functions');
 const { createUser } = require('./users/functions');
 const { execFile } = require('child_process');
-
-const authPrivateKey = process.env.SECRETKEY;
-// console.log('privateKey:',authPrivateKey)
-// const userName = process.env.DEVun;
-// console.log('UserName:',userName)
-// const password = process.env.DEVpw;
-// console.log('password: ',password)
-const host = process.env.DEVhost;
-console.log('host:',host)
+const { sanitizeInput } = require('./auth/security');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
+// DEFINE VARIABLES
+const authPrivateKey = process.env.SECRETKEY;
+if (!authPrivateKey) {
+  throw new Error('Required environmental variable authPrivateKey is undefined');
+}
+const host = process.env.DEVhost;
+if (!host) {
+  throw new Error('Required environmental variable host is undefined');
+}
+const moveScript = path.join(__dirname, 'moveSavedFile.sh');
+if (!fs.existsSync(moveScript)) {
+  throw new Error('Required moveFile script not initialized properly');
+}
+
+// INIT SERVER
 app.listen(process.env.PORT || 4040, () => {
   console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040}`);
 });
@@ -219,12 +229,6 @@ app.post('/prm/twilio', async (req, res) => {
 
 // XLSX toJSON SERVICE
 
-// Function to sanitize inputs
-function sanitizeInput(input) {
-  // Remove or escape potentially dangerous characters
-  // This is a basic example, tailor it to your specific needs
-  return input.replace(/[^a-zA-Z0-9-_\.]/g, "");
-}
 app.post('/convert-xlsx-to-json', (req, res) => {
   let { fileUrl, formName } = req.body;
 
@@ -258,14 +262,14 @@ app.post('/convert-xlsx-to-json', (req, res) => {
 });
 
 // Endpoint to move a saved file to webserver
-app.get('/moveToImages', verifyToken, (req, res) => {
+app.post('/moveToImages', verifyToken, (req, res) => {
     const filePath = req.body.file;
     
     if (!filePath) {
         return res.status(400).send('No file path provided');
     }
 
-    exec(`/Users/server/node/moveSavedFile.sh "${filePath}"`, (error, stdout, stderr) => {
+    exec(`"${moveFile}" "${filePath}"`, (error, stdout, stderr) => {
         if (error) {
             console.error(`exec error: ${error}`);
             return res.status(500).send('Script execution failed');
