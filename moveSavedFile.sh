@@ -5,13 +5,18 @@
 # Variables
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "$timestamp: START" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
-# Ensure the file path is passed as an argument
+# Ensure there is an argument
 if [ "$#" -lt 1 ]; then
     echo "  Usage: $0 <path_to_pdf>" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut' 2>&1
     exit 1
 fi
 
 PDF_PATH="$1"
+# Check if file exists and its ownership
+if [ ! -f "$PDF_PATH" ]; then
+    echo "  : File does not exist: $PDF_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+    exit 1
+fi
 DEBUG="$2"
 DESTINATION_PATH="/Library/FileMaker Server/HTTPServer/htdocs/httpsRoot/images"
 
@@ -19,11 +24,14 @@ echo "  : PDF_PATH: $PDF_PATH" >> '/Library/FileMaker Server/Data/Documents/move
 echo "  : DEBUG: $DEBUG" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
 
 # Move the file
-chmod u+rw "$PDF_PATH"
+chmod u+rw "$PDF_PATH" 2>> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
 if [ $? -ne 0 ]; then
     echo "  : Failed to change file permissions." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+    # Display file ownership and permissions
+    ls -l "$PDF_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
     exit 1
 fi
+
 if mv "$PDF_PATH" "$DESTINATION_PATH"; then
     echo "  : File moved successfully." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
     
