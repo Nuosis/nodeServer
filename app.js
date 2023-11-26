@@ -59,8 +59,9 @@ if (!httpsOptions.key || !httpsOptions.cert) {
 
 //AUTHENTICATION
 async function verifyToken(req, res, next) {
+  console.log(req.headers)
   // Get auth header value
-  const bearerHeader = req.headers['authorization'];
+  const bearerHeader = req.headers['authorization'] || req.headers['Authorization'] ;
   
   // Check if bearer is undefined
   if (typeof bearerHeader !== 'undefined') {
@@ -68,6 +69,7 @@ async function verifyToken(req, res, next) {
     const bearer = bearerHeader.split(' ');
     // Get token from array
     const bearerToken = bearer[1];
+    console.log('token:',bearerToken)
     
     try {
       // Verify the token
@@ -80,6 +82,7 @@ async function verifyToken(req, res, next) {
           }
         });
       });
+      console.log(decoded)
   
       // Attach decoded data to request object
       req.user = decoded;
@@ -89,7 +92,9 @@ async function verifyToken(req, res, next) {
     } catch (err) {
       res.sendStatus(403); // Forbidden
     }
-  }
+  } else {
+    res.status(401).send('No token provided');
+}
 }
 
 /*
@@ -298,7 +303,8 @@ app.post('/convert-xlsx-to-json', (req, res) => {
 });
 
 // Endpoint to move a saved file to webserver
-app.post('/moveToImages', verifyToken, (req, res) => {
+// removed verify token and filemaker is not sending headers at this time
+app.post('/moveToImages', (req, res) => {
     const filePath = req.body.file;
     const debug = req.body.debug;
     

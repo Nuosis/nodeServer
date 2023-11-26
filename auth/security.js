@@ -27,7 +27,6 @@ function readSSLFile(filePath) {
   }
 }
 
-
 // Function to hash a password
 async function hashPassword(password) {
   const saltRounds = 10; // or another appropriate number
