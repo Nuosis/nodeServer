@@ -8,29 +8,20 @@ echo "$timestamp: START" >> '/Library/FileMaker Server/Data/Documents/moveFileSt
 # Ensure there is an argument
 if [ "$#" -lt 1 ]; then
     echo "  Usage: $0 <path_to_pdf>" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut' 2>&1
+    echo "$timestamp: END" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
     exit 1
 fi
 
 PDF_PATH="$1"
-# Check if file exists and its ownership
-if [ ! -f "$PDF_PATH" ]; then
-    echo "  : File does not exist: $PDF_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+"  : PDF_PATH: $PDF_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+if [ $PDF_PATH =="Undefined" ]; then
+"  : PDF_PATH: Cannot be Empty" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+    echo "$timestamp: END" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
     exit 1
 fi
 DEBUG="$2"
-DESTINATION_PATH="/Library/FileMaker Server/HTTPServer/htdocs/httpsRoot/images"
-
-echo "  : PDF_PATH: $PDF_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
 echo "  : DEBUG: $DEBUG" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
-
-# Move the file
-chmod u+rw "$PDF_PATH" 2>> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
-if [ $? -ne 0 ]; then
-    echo "  : Failed to change file permissions." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
-    # Display file ownership and permissions
-    ls -l "$PDF_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
-    exit 1
-fi
+DESTINATION_PATH="/Library/FileMaker Server/HTTPServer/htdocs/httpsRoot/images"
 
 if mv "$PDF_PATH" "$DESTINATION_PATH"; then
     echo "  : File moved successfully." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
@@ -45,6 +36,7 @@ else
     errorMessage=$?
 
     echo "  : Failed to move file. Error code: $errorMessage" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+    echo "$timestamp: END" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
     exit 1
 fi
 echo "$timestamp: END" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
