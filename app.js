@@ -304,7 +304,7 @@ app.post('/convert-xlsx-to-json', (req, res) => {
 
 // Endpoint to move a saved file to webserver
 // removed verify token and filemaker is not sending headers at this time
-app.post('/moveToImages', (req, res) => {
+app.post('/moveToImages', verifyToken, (req, res) => {
     const filePath = req.body.file;
     const debug = req.body.debug;
     
