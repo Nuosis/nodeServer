@@ -1,7 +1,6 @@
 require('dotenv').config();
 const https = require('https');
 const fs = require('fs');
-const https = require('https');
 const path = require('path');
 const express = require('express');
 const axios = require('axios');
@@ -41,25 +40,21 @@ const httpsOptions = {
     cert: readSSLFile('/etc/letsencrypt/live/selectjanitorial.com/fullchain.pem')
 };
 
-
-if (!httpsOptions.key) {
-  // Optional: for local testing
+if (!httpsOptions.key || !httpsOptions.cert) {
+  // Start server without SSL for local testing
   app.listen(process.env.PORT || 4040, () => {
-    console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040}`);
+    console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040} without SSL`);
   });
 } else {
-
-// Start HTTPS server
+  // Start HTTPS server
   https.createServer(httpsOptions, app).listen(4343, () => {
     console.log(`[${new Date().toISOString()}] SSL Server is running on port 4343`);
   });
 
-// Optional: Start HTTP server and possibly redirect to HTTPS
+  // Start server without SSL for local testing
   app.listen(process.env.PORT || 4040, () => {
-    console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040}`);
+    console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040} without SSL`);
   });
-  
-
 }
 
 //AUTHENTICATION
@@ -270,7 +265,6 @@ app.post('/prm/twilio', async (req, res) => {
 });
 
 // XLSX toJSON SERVICE
-
 app.post('/convert-xlsx-to-json', (req, res) => {
   let { fileUrl, formName } = req.body;
 
@@ -306,12 +300,13 @@ app.post('/convert-xlsx-to-json', (req, res) => {
 // Endpoint to move a saved file to webserver
 app.post('/moveToImages', verifyToken, (req, res) => {
     const filePath = req.body.file;
+    const debug = req.body.debug;
     
     if (!filePath) {
         return res.status(400).send('No file path provided');
     }
 
-    exec(`"${moveScript}" "${filePath}"`, (error, stdout, stderr) => {
+    exec(`"${moveScript}" "${filePath}" "${debug}"`, (error, stdout, stderr) => {
         if (error) {
             console.error(`exec error: ${error}`);
             return res.status(500).send('Script execution failed');

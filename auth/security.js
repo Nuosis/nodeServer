@@ -17,14 +17,16 @@ function sanitizeInput(input) {
   return input.replace(/[^a-zA-Z0-9-_\.]/g, "");
 }
 
-// Function to read and report ssl files
+// Function to read and report SSL files
 function readSSLFile(filePath) {
-    try {
-        return fs.readFileSync(filePath);
-    } catch (err) {
-        throw new Error(`Failed to load SSL file at ${filePath}: ${err.message}`);
-    }
+  try {
+      return fs.readFileSync(filePath);
+  } catch (err) {
+      console.error(`Failed to load SSL file at ${filePath}: ${err.message}`);
+      return null; // Return null instead of throwing an error
+  }
 }
+
 
 // Function to hash a password
 async function hashPassword(password) {

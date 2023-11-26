@@ -3,13 +3,14 @@
 # Script to move a PDF from a temporary location to the web server's image folder
 
 # Ensure the file path is passed as an argument
-if [ "$#" -ne 1 ]; then
+if [ "$#" -lt 1 ]; then
     echo "Usage: $0 <path_to_pdf>" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut' 2>&1
     exit 1
 fi
 
 # Variables
 PDF_PATH="$1"
+DEBUG="$2"
 DESTINATION_PATH="/Library/FileMaker Server/HTTPServer/htdocs/httpsRoot/images"
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 
@@ -18,6 +19,9 @@ mv "$PDF_PATH" "$DESTINATION_PATH"
 
 # Check if the move was successful
 if [ $? -eq 0 ]; then
+    if [ "DEBUG" == 1 ]; then
+        mv "$DESTINATION_PATH" "$PDF_PATH" 
+    fi
     echo "$timestamp: File moved successfully." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
 else
     # Capture the last error message
