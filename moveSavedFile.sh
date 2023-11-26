@@ -10,7 +10,9 @@ fi
 
 # Variables
 PDF_PATH="$1"
+echo "$timestamp: PDF_PATH: $PDF_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
 DEBUG="$2"
+echo "$timestamp: DEBUG: $DEBUG" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
 DESTINATION_PATH="/Library/FileMaker Server/HTTPServer/htdocs/httpsRoot/images"
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 
@@ -19,6 +21,7 @@ mv "$PDF_PATH" "$DESTINATION_PATH"
 
 # Check if the move was successful
 if [ $? -eq 0 ]; then
+    echo "$timestamp: File moved successfully." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
     if [ "DEBUG" == 1 ]; then
         mv "$DESTINATION_PATH" "$PDF_PATH" 
     fi
