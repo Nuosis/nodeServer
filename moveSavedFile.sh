@@ -19,6 +19,11 @@ echo "  : PDF_PATH: $PDF_PATH" >> '/Library/FileMaker Server/Data/Documents/move
 echo "  : DEBUG: $DEBUG" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
 
 # Move the file
+chmod u+rw "$PDF_PATH"
+if [ $? -ne 0 ]; then
+    echo "  : Failed to change file permissions." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+    exit 1
+fi
 if mv "$PDF_PATH" "$DESTINATION_PATH"; then
     echo "  : File moved successfully." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
     
