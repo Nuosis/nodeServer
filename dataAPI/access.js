@@ -24,7 +24,7 @@ async function getFileMakerToken(server, database, userName, password) {
         const token = response.data.response.token;
         return token;
     } catch (error) {
-        console.error('FMDapiAuth ERROR:', error);
+        //console.error('FMDapiAuth ERROR:', error);
         throw error; // Throw the error back to be caught by the calling function
     }
 };

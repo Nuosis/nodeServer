@@ -1,5 +1,6 @@
 require('dotenv').config();
 const fs = require('fs');
+const https = require('https');
 const path = require('path');
 const express = require('express');
 const axios = require('axios');
@@ -13,8 +14,8 @@ const { createRecord, findRecord, editRecord, deleteRecord, duplicateRecord } = 
 // https://server.selectjanitorial.com/fmi/data/apidoc/#tag/records (to query parameters)
 const { createRecordSQL, findRecordsSQL } = require('./SQLite/functions');
 const { createUser } = require('./users/functions');
-const { execFile } = require('child_process');
-const { sanitizeInput } = require('./auth/security');
+const { exec, execFile } = require('child_process');
+const { sanitizeInput, readSSLFile } = require('./auth/security');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -34,10 +35,31 @@ if (!fs.existsSync(moveScript)) {
   throw new Error('Required moveFile script not initialized properly');
 }
 
-// INIT SERVER
-app.listen(process.env.PORT || 4040, () => {
-  console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040}`);
-});
+const httpsOptions = {
+    key: readSSLFile('/etc/letsencrypt/live/selectjanitorial.com/privkey.pem'),
+    cert: readSSLFile('/etc/letsencrypt/live/selectjanitorial.com/fullchain.pem')
+};
+
+
+if (!httpsOptions.key) {
+  // Optional: for local testing
+  app.listen(process.env.PORT || 4040, () => {
+    console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040}`);
+  });
+} else {
+
+// Start HTTPS server
+  https.createServer(httpsOptions, app).listen(4343, () => {
+    console.log(`[${new Date().toISOString()}] SSL Server is running on port 4343`);
+  });
+
+// Optional: Start HTTP server and possibly redirect to HTTPS
+  app.listen(process.env.PORT || 4040, () => {
+    console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040}`);
+  });
+  
+
+}
 
 //AUTHENTICATION
 async function verifyToken(req, res, next) {
@@ -84,7 +106,7 @@ app.post('/prm/twilio', verifyToken, async (req, res) => {
 // Hello World END POINT
 // /
 app.get('/', (req, res) => {
-  res.send('Server is running!');
+  res.send('Hey good lookin\'');
 });
 
 // VERIFICATION TOKEN END POINT
@@ -161,8 +183,19 @@ app.post('/prm/twilio', async (req, res) => {
   const server = host;
   const database = 'PRM';
   const username = process.env.PRMun;
+  if (!username) {
+    throw new Error('Required environmental variable username is undefined');
+  }
   const password = process.env.PRMpw;
+  if (!username) {
+    throw new Error('Required environmental variable password is undefined');
+  }
   const dataString = req.body;
+  if (!dataString) {
+    throw new Error('Required body.file is undefined');
+  }
+  console.log('server:',server,'db:',database,'username',username,'pw',password,'data',dataString)
+  
   // Parse the 'data' string into a JavaScript object
   const incomingData = JSON.stringify(dataString);
 
@@ -172,10 +205,17 @@ app.post('/prm/twilio', async (req, res) => {
 	/* GET FILEMAKER TOKEN */ 
   try {
     token = await getFileMakerToken(server, database, username, password);
-    // console.log("Token:", token);
+    console.log("Token:", token);
   } catch (error) {
-    console.error("Error getting FileMaker token:", error);
-    res.status(500).send("Error in getting FileMaker token");
+    const statusCode = error.response?.status || 500;
+    const errorMessage = error.response?.statusText || "Internal Server Error";
+
+    console.log("Error getting FileMaker token:", {'status': statusCode, 'errorMessage':errorMessage} );
+    //res.status(500).send("Error in getting FileMaker token");
+    res.status(statusCode).send({
+      error: "Error in getting FileMaker token",
+      details: errorMessage
+    });
     return; // Early return on error
   }
   
@@ -269,7 +309,7 @@ app.post('/moveToImages', verifyToken, (req, res) => {
         return res.status(400).send('No file path provided');
     }
 
-    exec(`"${moveFile}" "${filePath}"`, (error, stdout, stderr) => {
+    exec(`"${moveScript}" "${filePath}"`, (error, stdout, stderr) => {
         if (error) {
             console.error(`exec error: ${error}`);
             return res.status(500).send('Script execution failed');

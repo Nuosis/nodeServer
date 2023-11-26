@@ -1,4 +1,5 @@
 require('dotenv').config();
+const fs = require('fs');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -14,6 +15,15 @@ function sanitizeInput(input) {
   // Remove or escape potentially dangerous characters
   // This is a basic example, tailor it to your specific needs
   return input.replace(/[^a-zA-Z0-9-_\.]/g, "");
+}
+
+// Function to read and report ssl files
+function readSSLFile(filePath) {
+    try {
+        return fs.readFileSync(filePath);
+    } catch (err) {
+        throw new Error(`Failed to load SSL file at ${filePath}: ${err.message}`);
+    }
 }
 
 // Function to hash a password
@@ -68,5 +78,6 @@ module.exports = {
   decodeToken,
   hashPassword,
   verifyPassword,
-  sanitizeInput
+  sanitizeInput,
+  readSSLFile
 };
