@@ -11,17 +11,22 @@ fi
 # Variables
 PDF_PATH="$1"
 DESTINATION_PATH="/Library/FileMaker Server/HTTPServer/htdocs/httpsRoot/images"
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 
 # Move the file
 mv "$PDF_PATH" "$DESTINATION_PATH"
 
 # Check if the move was successful
 if [ $? -eq 0 ]; then
-    echo "File moved successfully." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut' 2>&1
+    echo "$timestamp: File moved successfully." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
 else
-    echo "Failed to move file." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut' 2>&1
+    # Capture the last error message
+    errorMessage=$(mv "$PDF_PATH" "$DESTINATION_PATH" 2>&1)
+
+    echo "$timestamp: Failed to move file. Error: $errorMessage" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
     exit 1
 fi
+
 
 # EXAMPLE CLI  /Library/FileMaker\ Server/Data/Scripts/moveSavedFile.sh <<PATH TO FILE>>
 # macOS FileMaker Use the "Perform AppleScript" step with a calculation like this: "do shell script \"/Library/FileMaker\ Server/Data/Scripts/moveSavedFile.sh " & YourFilePathVariable & "\""

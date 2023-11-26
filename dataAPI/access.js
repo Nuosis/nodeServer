@@ -2,8 +2,8 @@ const axios = require('axios');
 
 const base64Encode = function(username,password){
     const combined = username + ":" + password;
-    //return btoa(combined);
-    return Buffer.from(combined).toString('base64');
+    return btoa(combined);
+    //return Buffer.from(combined).toString('base64');
 } 
 
 // https://server.selectjanitorial.com/fmi/data/apidoc
@@ -24,7 +24,7 @@ async function getFileMakerToken(server, database, userName, password) {
         const token = response.data.response.token;
         return token;
     } catch (error) {
-        console.error('FMDapiAuth ERROR:', error);
+        //console.log('FMDapiAuth ERROR:', error);
         throw error; // Throw the error back to be caught by the calling function
     }
 };

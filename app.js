@@ -1,4 +1,5 @@
 require('dotenv').config();
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
@@ -163,6 +164,8 @@ app.post('/prm/twilio', async (req, res) => {
   const username = process.env.PRMun;
   const password = process.env.PRMpw;
   const dataString = req.body;
+
+  console.log('server:',server,'db:',database,'username',username,'pw',password,'data',dataString)
   // Parse the 'data' string into a JavaScript object
   const incomingData = JSON.stringify(dataString);
 
@@ -172,10 +175,17 @@ app.post('/prm/twilio', async (req, res) => {
 	/* GET FILEMAKER TOKEN */ 
   try {
     token = await getFileMakerToken(server, database, username, password);
-    // console.log("Token:", token);
+    console.log("Token:", token);
   } catch (error) {
-    console.error("Error getting FileMaker token:", error);
-    res.status(500).send("Error in getting FileMaker token");
+    const statusCode = error.response?.status || 500;
+    const errorMessage = error.response?.statusText || "Internal Server Error";
+
+    console.log("Error getting FileMaker token:", {'status': statusCode, 'errorMessage':errorMessage} );
+    //res.status(500).send("Error in getting FileMaker token");
+    res.status(statusCode).send({
+      error: "Error in getting FileMaker token",
+      details: errorMessage
+    });
     return; // Early return on error
   }
   
@@ -269,7 +279,7 @@ app.post('/moveToImages', verifyToken, (req, res) => {
         return res.status(400).send('No file path provided');
     }
 
-    exec(`"${moveFile}" "${filePath}"`, (error, stdout, stderr) => {
+    exec(`"${moveScript}" "${filePath}"`, (error, stdout, stderr) => {
         if (error) {
             console.error(`exec error: ${error}`);
             return res.status(500).send('Script execution failed');
