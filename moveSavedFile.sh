@@ -27,6 +27,7 @@ else
     exit 1
 fi
 
+
 # EXAMPLE CLI  /Library/FileMaker\ Server/Data/Scripts/moveSavedFile.sh <<PATH TO FILE>>
 # macOS FileMaker Use the "Perform AppleScript" step with a calculation like this: "do shell script \"/Library/FileMaker\ Server/Data/Scripts/moveSavedFile.sh " & YourFilePathVariable & "\""
 # winOS Use the "Send Event" script step with a calculation similar to this: "cmd /c \"/path/to/your/script.bat " & YourFilePathVariable & "\""

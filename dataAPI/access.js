@@ -2,8 +2,8 @@ const axios = require('axios');
 
 const base64Encode = function(username,password){
     const combined = username + ":" + password;
-    //return btoa(combined);
-    return Buffer.from(combined).toString('base64');
+    return btoa(combined);
+    //return Buffer.from(combined).toString('base64');
 } 
 
 // https://server.selectjanitorial.com/fmi/data/apidoc

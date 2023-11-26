@@ -1,4 +1,5 @@
 require('dotenv').config();
+const https = require('https');
 const fs = require('fs');
 const https = require('https');
 const path = require('path');
@@ -191,6 +192,7 @@ app.post('/prm/twilio', async (req, res) => {
     throw new Error('Required environmental variable password is undefined');
   }
   const dataString = req.body;
+
   if (!dataString) {
     throw new Error('Required body.file is undefined');
   }
