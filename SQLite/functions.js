@@ -50,7 +50,24 @@ function createRecordSQL(table, fieldValues) {
         });
     });
 }
+/* 
+const sqlite3 = require('sqlite3').verbose();
 
+Example usage of createRecordSQL
+const tableName = 'users';
+const newUser = {
+    name: 'John Doe',
+    email: 'johndoe@example.com'
+};
+
+createRecordSQL(tableName, newUser)
+    .then(lastID => {
+        console.log(`New user added with ID: ${lastID}`);
+    })
+    .catch(error => {
+        console.error('Failed to add new user:', error);
+    });
+*/
 
 /**
  * Performs a SELECT query on the specified table with provided query conditions.

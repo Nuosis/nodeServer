@@ -4,11 +4,86 @@ const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
+const sqlite3 = require('sqlite3').verbose();
+const { createRecordSQL, findRecordsSQL } = require('../SQLite/functions');
 
 const authPrivateKey = process.env.SECRETKEY; // Make sure this is defined in your .env file
 if (!authPrivateKey) {
   throw new Error('Required environmental variable SECRETKEY is undefined');
 }
+
+async function verifyToken(req, res, next) {
+  const path = (req.path)
+  // Get auth header value
+  const bearerHeader = req.headers['authorization'] || req.headers['Authorization'] ;
+  
+  // Check if bearer is undefined
+  if (typeof bearerHeader !== 'undefined') {
+    // Split at the space to get token
+    const bearer = bearerHeader.split(' ');
+    // Get token from array
+    const bearerToken = bearer[1];
+    //console.log('token:',bearerToken)
+    
+    try {
+      // Verify the token
+      const decoded = await new Promise((resolve, reject) => {
+        jwt.verify(bearerToken, authPrivateKey, (err, authData) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(authData);
+          }
+        });
+      });
+      const key = decoded.apiKey
+      console.log(decoded)
+  
+      // Attach decoded data to request object
+      req.user = decoded;
+
+      const tableName = 'userAccess';
+      const recordID = uuidv4();
+      const currentDate = new Date();
+      // For the date field
+      const sqliteDateFormat = currentDate.toISOString().split('T')[0]; // Formats to 'YYYY-MM-DD'
+      // For the timestamp fields
+      const sqliteTimestampFormat = currentDate.toISOString().replace('T', ' ').replace(/\.\d+Z$/, ''); // Formats to 'YYYY-MM-DD HH:MM:SS'
+      const newAccess = {
+          id: recordID,
+          userID: key,
+          endPoint: path,
+          date: sqliteDateFormat,
+          created: sqliteTimestampFormat,
+          modified: sqliteTimestampFormat
+      };
+
+
+      console.log('access record')
+      createRecordSQL(tableName, newAccess)
+        .then(lastID => {
+            console.log(`New user added with ID: ${lastID}`);
+        })
+        .catch(error => {
+            console.error('Failed to add new user:', error);
+      });
+  
+      // Next middleware
+      next();
+    } catch (err) {
+      res.sendStatus(403); // Forbidden
+    }
+  } else {
+      res.status(401).send('No token provided');
+  } 
+}
+/*
+EXAMPLE OF HOW TO ADD AUTHENTICATION TO ENDPOINT
+app.post('/prm/twilio', verifyToken, async (req, res) => {
+  <<code>>
+});
+*/
+
 
 // Function to sanitize inputs
 function sanitizeInput(input) {
@@ -79,6 +154,7 @@ module.exports = {
   decodeToken,
   hashPassword,
   verifyPassword,
+  verifyToken,
   sanitizeInput,
   readSSLFile
 };

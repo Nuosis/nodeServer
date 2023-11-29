@@ -21,7 +21,19 @@ if [ "$PDF_PATH" == "undefined" ]; then
 fi
 DEBUG="$2"
 echo "  : DEBUG: $DEBUG" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
-DESTINATION_PATH="/Library/FileMaker Server/HTTPServer/htdocs/httpsRoot/images"
+DESTINATION_PATH="/Library/FileMaker Server/HTTPServer/htdocs/httpsRoot/images/"
+
+if [ ! -f "$PDF_PATH" ]; then
+    echo "  : PDF file does not exist: $PDF_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+    echo "$timestamp: END" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+    exit 1
+fi
+
+if [ ! -d "$DESTINATION_PATH" ]; then
+    echo "  : Destination directory does not exist: $DESTINATION_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+    echo "$timestamp: END" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+    exit 1
+fi
 
 if mv "$PDF_PATH" "$DESTINATION_PATH"; then
     echo "  : File moved successfully." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
