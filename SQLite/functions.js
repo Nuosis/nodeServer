@@ -96,6 +96,7 @@ function findRecordsSQL(table, queryConditions) {
 
         const queryParams = queryConditions.flatMap(condition => Object.values(condition));
         const selectSQL = `SELECT * FROM ${table} WHERE ${whereClauses}`;
+        console.log('sql search: ',selectSQL)
 
         db.all(selectSQL, queryParams, (err, rows) => {
             db.close();

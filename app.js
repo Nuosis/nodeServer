@@ -3,6 +3,7 @@ const https = require('https');
 const fs = require('fs');
 const express = require('express');
 const axios = require('axios');
+const cors = require('cors');
 const app = express();
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
@@ -27,6 +28,7 @@ const logs = require('./endpoints/logging');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
 
 

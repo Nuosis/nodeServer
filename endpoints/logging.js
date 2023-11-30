@@ -26,6 +26,7 @@ module.exports = function (app) {
     
         const currentDate = new Date();
         const sqliteTimestampFormat = currentDate.toISOString().replace('T', ' ').replace(/\.\d+Z$/, '');
+        const sqliteDateFormat = currentDate.toISOString().split('T')[0];;
         const recordID = uuidv4();
     
         const logRecord = {
@@ -34,9 +35,9 @@ module.exports = function (app) {
             type: logType,
             message: logMessage,
             userID: userID,
-            created: sqliteTimestampFormat
+            created: sqliteTimestampFormat,
+            date: sqliteDateFormat
         };
-        
         console.log('logging record')
         try {
         await createRecordSQL('log', logRecord);
@@ -89,7 +90,7 @@ module.exports = function (app) {
         // Extracting query parameters
         // Expecting query parameter to be in the format: ?conditions=[{"key1":"value1"}, {"key2":"value2"}]
         let queryConditions = [];
-
+        console.log('incoming query: ',req.query.conditions)
         // Check if conditions are provided
         if (req.query.conditions) {
             try {
@@ -98,9 +99,13 @@ module.exports = function (app) {
                 return res.status(400).send('Invalid query conditions format');
             }
         }
-    
+        // Ensure that the array has an object at the 0 index
+        if (queryConditions.length === 0) {
+            queryConditions.push({}); // Initialize an empty object if the array is empty
+        }
         // Adding userID to the query conditions
-        queryConditions.push({ userID: userID });
+        queryConditions[0].userID = userID;
+        console.log('constructed query: ',queryConditions)
     
         try {
             const logs = await findRecordsSQL('log', queryConditions);
@@ -115,7 +120,7 @@ module.exports = function (app) {
      * Basic Usage:
      * Replace `your_token_here` with the actual bearer token. This example retrieves all logs for the authenticated user.
      *
-     * curl -X GET http://localhost:3000/log \
+     * curl -X GET http://localhost:4040/log \
      * -H 'Authorization: Bearer your_token_here'
      *
      * With Query Conditions:
@@ -123,11 +128,11 @@ module.exports = function (app) {
      * The conditions are passed as a JSON string in the `conditions` query parameter.
      *
      * Example 1: Retrieve logs of a specific type (e.g., 'error')
-     * curl -X GET "http://localhost:3000/log?conditions=[{\"type\":\"error\"}]" \
+     * curl -X GET "http://localhost:4040/log?conditions=[{\"type\":\"error\"}]" \
      * -H 'Authorization: Bearer your_token_here'
      *
      * Example 2: Retrieve logs with a specific message content
-     * curl -X GET "http://localhost:3000/log?conditions=[{\"message\":\"specific message content\"}]" \
+     * curl -X GET "http://localhost:4040/log?conditions=[{\"message\":\"specific message content\"}]" \
      * -H 'Authorization: Bearer your_token_here'
      *
      * Note: In a production environment, ensure to URL-encode the JSON string in the query parameters.

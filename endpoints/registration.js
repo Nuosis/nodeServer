@@ -17,7 +17,6 @@ module.exports = function (app) {
                 if (username.length > 32 || password.length > 32) {
                     return res.status(400).json({ message: 'Username and password appear invalid' });
                 }
-
                 // Call the createUser function
                 const newUser = await createUser(username, password);
 
