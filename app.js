@@ -19,6 +19,7 @@ const { verifyToken, sanitizeInput, readSSLFile } = require('./auth/security');
 
 // Require the endpoint modules
 const basicEndpoint = require('./endpoints/basic');
+const access = require('./endpoints/access');
 const jsonConversions = require('./endpoints/jsonConversion');
 const fileManager = require('./endpoints/fileManagement');
 const prm = require('./endpoints/prm');
@@ -66,6 +67,7 @@ if (!httpsOptions.key || !httpsOptions.cert) {
 
 //ENDPOINT FILES
 basicEndpoint(app);
+access(app);
 jsonConversions(app);
 fileManager(app);
 prm(app);

@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { verifyToken, sanitizeInput, readSSLFile } = require('../auth/security');
+const { verifyToken } = require('../auth/security');
 
 module.exports = function (app) {
     // Hello World END POINT

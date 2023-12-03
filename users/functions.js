@@ -9,15 +9,54 @@ if (!WEBHOOKhost) {
     throw new Error('Required environmental variable is undefined');
 }
 
-async function createUser(username, password) {
-    console.log("createUser");
+async function createCompany(company) {
+    console.log("createCompany");
     const id = generateUUID();
+    const apiKeyDetails = generateApiKey(); // this returns { apiKey, publicKey }
+    const timestamp = new Date().toISOString();
+
+    const comapnyRecord = {
+        id: id,
+        idFilemaker: '',
+        apiKey: apiKeyDetails.apiKey,
+        created: timestamp,
+        modified: timestamp
+    };
+    console.log("companyRecord", companyRecord);
+
+    try {
+        await createRecordSQL('company', companyRecord);
+        console.log('Company created successfully');
+
+    } catch (error) {
+        console.error('Error occurred:', error);
+
+        // Rollback user creation if email sending fails or any other error occurs
+        console.error('Rolling back user creation.');
+        try {
+            await deleteRecordSQL('users', { id: id });
+            console.log('User creation rolled back successfully.');
+        } catch (rollbackError) {
+            console.error('Error during rollback:', rollbackError);
+        }
+
+        return null; // Indicate failure
+    }
+
+    return { apiKey: apiKeyDetails.apiKey };
+}
+
+async function createUser(company, username, password) {
+    console.log("createUser");
+    const userId = generateUUID();
+    const companyId = generateUUID();
     const hashedPassword = await hashPassword(password);
     const apiKeyDetails = generateApiKey(); // this returns { apiKey, publicKey }
     const timestamp = new Date().toISOString();
 
     const userRecord = {
-        id: id,
+        id: userId,
+        idCompany: companyId,
         username: username,
         password: hashedPassword,
         filemakerId: '', // Ignored during creation
@@ -69,5 +108,6 @@ async function createUser(username, password) {
 
 
 module.exports = {
-    createUser
+    createUser,
+    createCompany
 };

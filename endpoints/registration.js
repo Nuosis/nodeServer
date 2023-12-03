@@ -1,24 +1,61 @@
 require('dotenv').config();
-const { verifyToken, sanitizeInput, readSSLFile } = require('../auth/security');
+const { verifyToken, verifyPassword } = require('../auth/security');
 const { createRecordSQL, findRecordsSQL } = require('../SQLite/functions');
-const { createUser } = require('../users/functions');
+const { createUser, createCompany } = require('../users/functions');
 
 module.exports = function (app) {
-    // Registration endpoint
-    app.post('/register', async (req, res) => {
+
+    // Company Creation Endpoint
+    app.post('/createComapny', async (req, res) => {
         try {
-                const { username, password } = req.body;
-                if (!username || !password) {
-                    return res.status(400).json({ message: 'Username and password are required' });
+                const { company, DEVun, DEVpw } = req.body;
+                if (!company || !DEVun || !DEVpw) {
+                    return res.status(400).json({ message: 'company, Username and password are required' });
                 }
 
                 // Optionally, add more validation for username and password here
                 // Check if username and password are within the length limit
-                if (username.length > 32 || password.length > 32) {
-                    return res.status(400).json({ message: 'Username and password appear invalid' });
+                if (company.length > 50 ) {
+                    return res.status(400).json({ message: 'comapny, username or password appear invalid' });
+                }
+                //verify dev
+                if (DEVun !== process.env.DEVun || DEVpw !== process.env.DEVpw) {
+                    return res.status(400).json({ message: 'comapny, username or password appear invalid' });
                 }
                 // Call the createUser function
-                const newUser = await createUser(username, password);
+                const newUser = await createCompany(company);
+
+                res.status(201).json({ 
+                    message: 'User created successfully', 
+                    user: { apiKey: newUser.apiKey }
+                });
+        } catch (error) {
+            console.error('Registration error:', error);
+            res.status(500).json({ message: 'Error in user registration' });
+        }
+    });
+    /*
+    curl -X POST http://localhost:4040/createCompany \
+    -H "Content-Type: application/json" \
+    -d '{"company": "ACME Co","username": "test@example.com", "password": "yourpassword"}'
+    */
+
+
+    // Registration endpoint
+    app.post('/register', async (req, res) => {
+        try {
+                const { company, username, password } = req.body;
+                if (!company || !username || !password) {
+                    return res.status(400).json({ message: 'company, Username and password are required' });
+                }
+
+                // Optionally, add more validation for username and password here
+                // Check if username and password are within the length limit
+                if (username.company > 50 || username.length > 32 || password.length > 32) {
+                    return res.status(400).json({ message: 'comapny, username or password appear invalid' });
+                }
+                // Call the createUser function
+                const newUser = await createUser(company, username, password);
 
                 res.status(201).json({ 
                     message: 'User created successfully', 

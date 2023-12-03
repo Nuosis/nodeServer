@@ -25,3 +25,8 @@ function generateApiKey(length = 32) {
 
 const newKeys= generateApiKey()
 console.log(newKeys)
+
+module.exports = {
+  generateToken,
+  generateApiKey
+};
