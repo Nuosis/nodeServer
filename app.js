@@ -25,6 +25,7 @@ const fileManager = require('./endpoints/fileManagement');
 const prm = require('./endpoints/prm');
 const registration = require('./endpoints/registration');
 const logs = require('./endpoints/logging');
+const creation = require('./endpoints/creation');
 
 
 app.use(express.json());
@@ -73,4 +74,5 @@ fileManager(app);
 prm(app);
 registration(app);
 logs(app);
+creation(app);
 

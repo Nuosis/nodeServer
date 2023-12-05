@@ -4,6 +4,25 @@ const { findRecordsSQL } = require('../SQLite/functions');
 const { generateToken } = require('../auth/generateKey');
 
 module.exports = function (app) {
+    app.post('/dev', (req, res) => {
+        console.log('/dev')
+        const { username, password } = req.body;
+        if (!username || !password) {
+            return res.status(400).json({ message: 'Username and password are required' });
+        }
+
+        if (username.length > 32 || password.length > 32) {
+            return res.status(400).json({ message: 'Username or password too long' });
+        }
+
+        // Check if the username and password are for a developer
+        if (username === process.env.DEVun && password === process.env.DEVpw) {
+            return res.status(200).json({ message: 'Authorized' });
+        } else {
+            return res.status(404).json({ message: 'Denied' });
+        }
+    });
+
     app.post('/generateToken', async (req, res) => {
         console.log('/generateToken')
         try {

@@ -4,75 +4,26 @@ const { createRecordSQL, findRecordsSQL } = require('../SQLite/functions');
 const { createUser, createCompany } = require('../users/functions');
 
 module.exports = function (app) {
-
-    // Company Creation Endpoint
-    app.post('/createCompany', async (req, res) => {
+    // SEND VERIFICATION EMAIL
+    app.get('/send_verification', verifyToken, async (req, res) => {
         try {
-                const { company, DEVun, DEVpw } = req.body;
-                if (!company || !DEVun || !DEVpw) {
-                    return res.status(400).json({ message: 'company, Username and password are required' });
-                }
+            const username = req.user
+            const verificationUrl = process.env.WEBHOOKhost + '/email_verification'; // Replace with actual URL
+            const emailSent = await sendVerificationEmail(username, verificationUrl);
 
-                // Optionally, add more validation for username and password here
-                // Check if username and password are within the length limit
-                if (company.length > 50 ) {
-                    return res.status(400).json({ message: 'comapny, username or password appear invalid' });
-                }
-                //verify dev
-                if (DEVun !== process.env.DEVun || DEVpw !== process.env.DEVpw) {
-                    return res.status(400).json({ message: 'comapny, username or password appear invalid' });
-                }
-                // Call the createUser function
-                console.log('comapny creation STARTED')
-                const newUser = await createCompany(company);
-
-                res.status(201).json({ 
-                    message: 'User created successfully', 
-                    user: { apiKey: newUser.apiKey }
-                });
-        } catch (error) {
-            console.error('Registration error:', error);
-            res.status(500).json({ message: 'Error in user registration' });
+            if (emailSent) {
+                res.status(200).json({ message: 'Email sent' });
+            } else {
+                // If sendVerificationEmail indicates failure
+                res.status(500).json({ message: 'Failed to send email' });
+            }
+        } catch (err) {
+            // If there's an error in sending the email, return an error response
+            res.status(500).json({ message: 'Error in sending email', error: err.message });
         }
     });
-    /*
-    curl -X POST http://localhost:4040/createCompany \
-    -H "Content-Type: application/json" \
-    -d '{"company": "ACME Co","username": "test@example.com", "password": "yourpassword"}'
-    */
 
 
-    // Registration endpoint
-    app.post('/register', async (req, res) => {
-        try {
-                const { company, username, password } = req.body;
-                if (!company || !username || !password) {
-                    return res.status(400).json({ message: 'company, Username and password are required' });
-                }
-
-                // Optionally, add more validation for username and password here
-                // Check if username and password are within the length limit
-                if (username.company > 50 || username.length > 32 || password.length > 32) {
-                    return res.status(400).json({ message: 'comapny, username or password appear invalid' });
-                }
-                // Call the createUser function
-                const newUser = await createUser(company, username, password);
-
-                res.status(201).json({ 
-                    message: 'User created successfully', 
-                    user: { id: newUser.id, username: newUser.username, apiKey: newUser.apiKey }
-                });
-            } catch (error) {
-                console.error('Registration error:', error);
-                res.status(500).json({ message: 'Error in user registration' });
-        }
-    });
-    /*
-    curl -X POST http://localhost:4040/register \
-    -H "Content-Type: application/json" \
-    -d '{"username": "test@example.com", "password": "yourpassword"}'
-    */
-    
     // Email Verification endpoint
     app.get('/email_verification', verifyToken, (req, res) => {
         const apiKey = req.user.apiKey;
