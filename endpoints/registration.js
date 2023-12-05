@@ -6,7 +6,7 @@ const { createUser, createCompany } = require('../users/functions');
 module.exports = function (app) {
 
     // Company Creation Endpoint
-    app.post('/createComapny', async (req, res) => {
+    app.post('/createCompany', async (req, res) => {
         try {
                 const { company, DEVun, DEVpw } = req.body;
                 if (!company || !DEVun || !DEVpw) {
@@ -23,6 +23,7 @@ module.exports = function (app) {
                     return res.status(400).json({ message: 'comapny, username or password appear invalid' });
                 }
                 // Call the createUser function
+                console.log('comapny creation STARTED')
                 const newUser = await createCompany(company);
 
                 res.status(201).json({ 

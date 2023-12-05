@@ -10,7 +10,11 @@ if (!WEBHOOKhost) {
 }
 
 async function createCompany(company) {
-    console.log("createCompany");
+    console.log("createCompanyFunction");
+    if (!company) {
+        return res.status(400).json({ message: 'Company required' });
+    }
+
     const id = generateUUID();
     const apiKeyDetails = generateApiKey(); // this returns { apiKey, publicKey }
     const timestamp = new Date().toISOString();
@@ -46,10 +50,12 @@ async function createCompany(company) {
     return { apiKey: apiKeyDetails.apiKey };
 }
 
-async function createUser(company, username, password) {
+async function createUser(companyId, username, password) {
     console.log("createUser");
+    if (!companyId || !username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
+    }
     const userId = generateUUID();
-    const companyId = generateUUID();
     const hashedPassword = await hashPassword(password);
     const apiKeyDetails = generateApiKey(); // this returns { apiKey, publicKey }
     const timestamp = new Date().toISOString();
@@ -60,7 +66,7 @@ async function createUser(company, username, password) {
         username: username,
         password: hashedPassword,
         filemakerId: '', // Ignored during creation
-        apiKey: apiKeyDetails.apiKey,
+        // apiKey: apiKeyDetails.apiKey, MOVED TO COMPANY
         verified: 0,
         created: timestamp,
         modified: timestamp

@@ -90,7 +90,7 @@ module.exports = function (app) {
         // Extracting query parameters
         // Expecting query parameter to be in the format: ?conditions=[{"key1":"value1"}, {"key2":"value2"}]
         let queryConditions = [];
-        console.log('incoming query: ',req.query.conditions)
+        console.log('verifyToken passed query params: ',req.query.conditions)
         // Check if conditions are provided
         if (req.query.conditions) {
             try {

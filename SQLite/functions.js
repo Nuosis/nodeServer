@@ -78,6 +78,12 @@ createRecordSQL(tableName, newUser)
  */
 function findRecordsSQL(table, queryConditions) {
     return new Promise((resolve, reject) => {
+        // Check if queryConditions is an array
+        if (!Array.isArray(queryConditions)) {
+            console.error('queryConditions must be an array');
+            reject(new Error('queryConditions must be an array'));
+            return;
+        }
         const dbPath = './db.sqlite';
         const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
             if (err) {
