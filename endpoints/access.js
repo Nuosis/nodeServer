@@ -1,27 +1,54 @@
 require('dotenv').config();
-const { verifyPassword } = require('../auth/security');
+const { generateApiKey,verifyPassword } = require('../auth/security');
 const { findRecordsSQL } = require('../SQLite/functions');
 const { generateToken } = require('../auth/generateKey');
 
+
 module.exports = function (app) {
     app.post('/dev', (req, res) => {
-        console.log('/dev')
-        const { username, password } = req.body;
+        console.log('/dev');
+        const { username, password, company } = req.body;
+    
+        // Validate username and password
         if (!username || !password) {
             return res.status(400).json({ message: 'Username and password are required' });
         }
-
+    
         if (username.length > 32 || password.length > 32) {
             return res.status(400).json({ message: 'Username or password too long' });
         }
-
-        // Check if the username and password are for a developer
+    
+        // Check developer credentials
         if (username === process.env.DEVun && password === process.env.DEVpw) {
-            return res.status(200).json({ message: 'Authorized' });
+            // Handle company logic
+            if (company) {
+                const query = [{ company: company }];
+                findRecordsSQL('company', query)
+                    .then(records => {
+                        if (records.length > 0) {
+                            // Company exists, extract apiKey and generate token
+                            const apiKey = records[0].apiKey; // Assuming apiKey is a field in your records
+                            const token = generateToken(apiKey); // Implement generateToken function as needed
+                            return res.status(200).json({ company, token });
+                        } else {
+                            // Company does not exist, generate new API key
+                            const newApiKey = generateApiKey(); // Implement generateApiKey function as needed
+                            return res.status(200).json({ company: null, token: newApiKey.token });
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error finding records:', err);
+                        return res.status(500).json({ message: 'Internal server error' });
+                    });
+            } else {
+                // No company provided, just generate token
+                const token = generateToken(process.env.DEVun); // Or any other default token generation logic
+                return res.status(200).json({ company: null, token });
+            }
         } else {
             return res.status(404).json({ message: 'Denied' });
         }
-    });
+    });    
 
     app.post('/generateToken', async (req, res) => {
         console.log('/generateToken')

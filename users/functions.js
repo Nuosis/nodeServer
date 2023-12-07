@@ -25,7 +25,10 @@ async function createCompany(company) {
     try {
         await createRecordSQL('company', companyRecord);
         console.log('Company created successfully');
-        return { company, apiKey: apiKeyDetails.apiKey }; // Return both ID and API Key
+        return { 
+            company, 
+            apiKey: apiKeyDetails.apiKey, 
+            token: apiKeyDetails.token };
     } catch (error) {
         console.error('Error occurred:', error);
         console.error('Rolling back company creation.');

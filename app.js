@@ -26,11 +26,17 @@ const prm = require('./endpoints/prm');
 const registration = require('./endpoints/registration');
 const logs = require('./endpoints/logging');
 const creation = require('./endpoints/creation');
+const corsOptions = {
+  origin: '*', // or '*' for allowing any origin
+  methods: 'GET,POST', // Allowed methods
+  allowedHeaders: 'Content-Type,Authorization', // Allowed headers
+};
 
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors(corsOptions));
+
 
 
 

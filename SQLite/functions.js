@@ -75,7 +75,11 @@ createRecordSQL(tableName, newUser)
  * @param {string} table The name of the table to query.
  * @param {Object[]} queryConditions An array of objects representing query conditions.
  * @returns {Promise<any[]>} A promise that resolves to an array of the found records.
- */
+* Example usage
+* findRecordsSQL('users', [{ name: 'smith', state: 'ny' }])
+    .then(records => console.log('Records found:', records))
+    .catch(err => console.error('Error finding records:', err));
+*/
 function findRecordsSQL(table, queryConditions) {
     return new Promise((resolve, reject) => {
         // Check if queryConditions is an array
