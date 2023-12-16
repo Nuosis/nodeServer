@@ -21,6 +21,7 @@ module.exports = function (app) {
      * @returns {Promise<void>} A Promise that resolves when the log entry has been processed.
      */
     app.post('/log', verifyToken, async (req, res) => {
+        console.log('/log POST')
         const { logType, logMessage, logID } = req.body;
         const userID = req.user.apiKey; // Extracted from token
     
@@ -85,6 +86,7 @@ module.exports = function (app) {
      */
     app.get('/log', verifyToken, async (req, res) => {
         // Extracting userID from the verified token
+        console.log('/log GET')
         const userID = req.user.apiKey;
     
         // Extracting query parameters

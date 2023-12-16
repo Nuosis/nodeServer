@@ -1,10 +1,12 @@
 require('dotenv').config();
+const { verifyToken } = require('../auth/security');
 const { createCompany, createUser } = require('../users/functions');
 const { findRecordsSQL } = require('../SQLite/functions');
 
 module.exports = function (app) {
     
     // Company Creation Endpoint
+    // dev only
     app.post('/createCompany', (req, res) => {
         const { company, DEVun, DEVpw } = req.body;
     
@@ -24,14 +26,14 @@ module.exports = function (app) {
         findRecordsSQL('company', [{ company: company }])
         .then(records => {
             if (records.length > 0) {
-                // Company already exists, generate token
+                // Company already exists, generate access token
                 console.log('Company exists, generating token');
                 const tokenRequestData = {
                     company: company,
                     username: process.env.DEVun,
                     password: process.env.DEVpw
                 };
-                return fetch('http://localhost:4040/generateToken', {
+                return fetch('http://localhost:4040/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -85,24 +87,28 @@ module.exports = function (app) {
 
 
    // user creation endpoint
-    app.post('/createUser', async (req, res) => {
-        try {
-                const { company, username, password, DEVun, DEVpw  } = req.body;
-                if (!company || !username || !password || !DEVun || !DEVpw) {
-                    return res.status(400).json({ message: 'company, Username and password (and Dev Credentials) are required' });
-                }
-                //verify dev
-                if (DEVun !== process.env.DEVun || DEVpw !== process.env.DEVpw) {
-                    return res.status(400).json({ message: 'comapny, username and/or password appear invalid' });
-                }
+   // super user or greater 
+    app.post('/createUser', verifyToken, async (req, res) => {
 
-                // Optionally, add more validation for username and password here
-                // Check if username and password are within the length limit
-                if (username.company > 50 || username.length > 32 || password.length > 322 || DEVun.length > 32 || DEVpw.length > 32) {
-                    return res.status(400).json({ message: 'comapny, username and/or password error' });
-                }
+        const { username, password, accessLevel  } = req.body;
+        if (!username || !password ) {
+            return res.status(400).json({ message: 'username and password are required' });
+        }
+        const newUserAccess = accessLevel || 'standard';
+        //access level
+        const { access } = req.user
+        if (access == 'standard') {
+            return res.status(400).json({ message: 'Insufficient access level to create user' });
+        }
+        const { apiKey } = req.user
+        
+        // Check if username and password are within the length limit
+        if (username.company > 50 || username.length > 32 || password.length > 322 || DEVun.length > 32 || DEVpw.length > 32) {
+            return res.status(400).json({ message: 'comapny, username and/or password error' });
+        }
+        try {
                 // Call the createUser function
-                const newUser = await createUser(company, username, password);
+                const newUser = await createUser(apiKey, username, password, newUserAccess);
                 res.status(201).json({ 
                     message: 'User created successfully', 
                     user: { id: newUser.id, username: newUser.username }

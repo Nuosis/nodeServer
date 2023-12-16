@@ -62,10 +62,10 @@ async function verifyToken(req, res, next) {
       console.log('access record')
       createRecordSQL(tableName, newAccess)
         .then(lastID => {
-            console.log(`New user added with ID: ${lastID}`);
+            console.log(`New access record added`);
         })
         .catch(error => {
-            console.error('Failed to add new user:', error);
+            console.error('Failed to add new access record:', error);
       });
   
       // Next middleware
@@ -120,7 +120,9 @@ function decodeToken(token) {
     // Return relevant information from the payload
     return {
       success: true,
-      apiKey: decoded.apiKey
+      apiKey: decoded.apiKey,
+      userName: decoded.userName,
+      access: decoded.access
     };
   } catch (err) {
     console.error('Invalid or expired token:', err.message);
@@ -132,9 +134,12 @@ function decodeToken(token) {
 }
 
 // Function to generate a token from an apiKey
-function generateToken(apiKey) {
+function generateToken(apiKey, userName, access) {
+    const key = apiKey || '';
+    const user = userName || '';
+    const accessLevel = access || 'standard';
     // Sign the API key
-    const token = jwt.sign({ apiKey: apiKey }, authPrivateKey, { algorithm: 'HS256' });
+    const token = jwt.sign({ apiKey: key, userName: user, access: accessLevel }, authPrivateKey, { algorithm: 'HS256' });
     return token
 }
 
@@ -143,8 +148,8 @@ function generateApiKey(length = 32) {
     const apiKey = crypto.randomBytes(length).toString('hex');
 
     // Sign the API key
-    const token = generateToken(apiKey)
-    return {'apiKey':apiKey, 'token':token}
+    // const token = generateToken(apiKey)
+    return {apiKey: apiKey}
 }
 
 module.exports = {

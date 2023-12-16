@@ -9,7 +9,8 @@ async function createCompany(company) {
     }
 
     const id = generateUUID();
-    const apiKeyDetails = generateApiKey(); // this returns { apiKey, publicKey }
+    const apiKeyDetails = generateApiKey(); // this returns { apiKey }
+    const token = generateToken(apiKeyDetails.apiKey,'');
     const timestamp = new Date().toISOString();
 
     const companyRecord = {
@@ -28,7 +29,7 @@ async function createCompany(company) {
         return { 
             company, 
             apiKey: apiKeyDetails.apiKey, 
-            token: apiKeyDetails.token };
+            token: token };
     } catch (error) {
         console.error('Error occurred:', error);
         console.error('Rolling back company creation.');
@@ -45,18 +46,19 @@ async function createCompany(company) {
 }
 
 
-async function createUser(company, username, password) {
+async function createUser(apiKey, username, password, access) {
     console.log("createUser");
 
-    if (!company || !username || !password) {
-        throw new Error('Username and password are required');
+    if (!apiKey || !username || !password) {
+        throw new Error('ApiKey, Username and password are required');
     }
 
-    const companyInfo = findRecordsSQL('company', [{company}]);
+    const companyInfo = findRecordsSQL('company', [{apiKey}]);
     if (!companyInfo) {
         throw new Error('Company not found');
     }
 
+    const accessData = access || 'standard' ;
     const companyId = companyInfo.id;
     const userId = generateUUID();
     const hashedPassword = await hashPassword(password);
@@ -70,7 +72,8 @@ async function createUser(company, username, password) {
         filemakerId: '', // Ignored during creation
         verified: 0,
         created: timestamp,
-        modified: timestamp
+        modified: timestamp,
+        access: accessData
     };
     console.log("userRecord", userRecord);
 
