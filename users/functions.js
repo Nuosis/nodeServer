@@ -10,7 +10,7 @@ async function createCompany(company) {
 
     const id = generateUUID();
     const apiKeyDetails = generateApiKey(); // this returns { apiKey }
-    const token = generateToken(apiKeyDetails.apiKey,'');
+    // const token = generateToken(apiKeyDetails.apiKey,''); REMOVED tokens are generated at the user level. API keys are generated at the company level
     const timestamp = new Date().toISOString();
 
     const companyRecord = {
@@ -28,8 +28,7 @@ async function createCompany(company) {
         console.log('Company created successfully');
         return { 
             company, 
-            apiKey: apiKeyDetails.apiKey, 
-            token: token };
+            apiKey: apiKeyDetails.apiKey};
     } catch (error) {
         console.error('Error occurred:', error);
         console.error('Rolling back company creation.');
@@ -45,12 +44,12 @@ async function createCompany(company) {
     }
 }
 
-
 async function createUser(apiKey, username, password, access) {
     console.log("createUser");
-
-    if (!apiKey || !username || !password) {
-        throw new Error('ApiKey, Username and password are required');
+    
+    // if access is not passed will be set to 'standard'
+    if (!apiKey || !username || !password ) {
+        throw new Error('ApiKey, Username and Password are required');
     }
 
     const companyInfo = findRecordsSQL('company', [{apiKey}]);
@@ -73,7 +72,8 @@ async function createUser(apiKey, username, password, access) {
         verified: 0,
         created: timestamp,
         modified: timestamp,
-        access: accessData
+        access: accessData,
+        resetPassword: true
     };
     console.log("userRecord", userRecord);
 

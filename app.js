@@ -8,14 +8,7 @@ const app = express();
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const sqlite3 = require('sqlite3').verbose();
-const { getFileMakerToken, releaseFileMakerToken } = require('./dataAPI/access');
-// const { verifyToken } = require('./auth/generateApiKey.js');
-const { createRecord, findRecord, editRecord, deleteRecord, duplicateRecord } = require('./dataAPI/functions');
-// https://server.selectjanitorial.com/fmi/data/apidoc/#tag/records (to query parameters)
-const { createRecordSQL, findRecordsSQL } = require('./SQLite/functions');
-const { createUser } = require('./users/functions');
-const { exec, execFile } = require('child_process');
-const { verifyToken, sanitizeInput, readSSLFile } = require('./auth/security');
+const { readSSLFile } = require('./auth/security');
 
 // Require the endpoint modules
 const basicEndpoint = require('./endpoints/basic');
@@ -25,7 +18,7 @@ const fileManager = require('./endpoints/fileManagement');
 const prm = require('./endpoints/prm');
 const registration = require('./endpoints/registration');
 const logs = require('./endpoints/logging');
-const creation = require('./endpoints/creation');
+const userManagement = require('./endpoints/userManagement');
 const corsOptions = {
   origin: '*', // or '*' for allowing any origin
   methods: 'GET,POST', // Allowed methods
@@ -80,5 +73,5 @@ fileManager(app);
 prm(app);
 registration(app);
 logs(app);
-creation(app);
+userManagement(app);
 

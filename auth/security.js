@@ -114,6 +114,12 @@ async function verifyPassword(password, hashedPassword) {
 }
 
 // Function to verify the token and return the decoded payload
+/**
+ * 
+ * @param {*} token 
+ * @returns encoded contents of Token {apiKey, userName, access}
+ *          access can be 'standard', 'admin', 'dev'
+ */
 function decodeToken(token) {
   try {
     const decoded = jwt.verify(token, authPrivateKey);

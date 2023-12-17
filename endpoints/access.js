@@ -3,7 +3,12 @@ const { generateToken, generateApiKey,verifyPassword } = require('../auth/securi
 const { findRecordsSQL } = require('../SQLite/functions');
 //const { generateToken } = require('../auth/generateKey');
 
-
+/**
+ * @param {userName, password, company} app //required in body
+ * if dev credentials passed, returns company info (or generates generic apiKey) as well as dev token
+ * 
+ * @returns {company name, token}
+ */
 module.exports = function (app) {
     app.post('/login', async (req, res) => {
         console.log('/login');
@@ -20,15 +25,16 @@ module.exports = function (app) {
     
         // Check developer credentials
         if (username === process.env.DEVun && password === process.env.DEVpw) {
+            console.log('dev auth initiated')
             // Handle company logic
             if (company) {
                 const query = [{ company: company }];
                 findRecordsSQL('company', query)
                     .then(records => {
                         if (records.length > 0) {
-                            // Company exists, extract apiKey and generate token
-                            const apiKey = records[0].apiKey; // Assuming apiKey is a field in your records
-                            const token = generateToken(apiKey,process.env.DEVun,'dev'); // Implement generateToken function as needed
+                            // Company exists, extract apiKey and generate dev token
+                            const apiKey = records[0].apiKey; 
+                            const token = generateToken(apiKey,process.env.DEVun,'dev');
                             return res.status(200).json({ company, token });
                         } else {
                             // Company does not exist, generate new API key
@@ -44,13 +50,12 @@ module.exports = function (app) {
             } else {
                 // No company provided, just generate token
                 const apiKey = generateApiKey()
-                const token = generateToken(apiKey,process.env.DEVun,'dev'); // Or any other default token generation logic
+                const token = generateToken(apiKey,process.env.DEVun,'dev');
                 return res.status(200).json({ company: null, token });
             }
         } else {
-            //return res.status(404).json({ message: 'Denied' });
-            // Authenticate regular user
-            console.log('user process initiated')
+            // Authenticate user
+            console.log('user auth initiated')
             const userQuery = [{ username: username }];
             const userRecords = await findRecordsSQL('users', userQuery);
 
@@ -75,7 +80,7 @@ module.exports = function (app) {
             }
 
             apiKey = companyRecords[0].apiKey;
-            const token = generateToken(apiKey,username,userRecords[0].access); // Or any other default token generation logic
+            const token = generateToken(apiKey,username,userRecords[0].access);
             return res.status(200).json({ company: companyRecords[0].company, token });
         }
     });    
