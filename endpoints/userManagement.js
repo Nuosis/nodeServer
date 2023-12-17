@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { verifyPassword, verifyToken, hashPassword } = require('../auth/security');
+const { verifyToken, sanitizeInput, generateToken } = require('../auth/security');
 const { createCompany, createUser } = require('../users/functions');
 const { findRecordsSQL } = require('../SQLite/functions');
 
@@ -171,6 +171,41 @@ module.exports = function (app) {
         } catch (err) {
             // If there's an error in sending the email, return an error response
             res.status(500).json({ message: 'Error getting company users', error: err.message });
+        }
+    });
+
+    app.post('/user_token', verifyToken, async (req, res) => {
+        console.log('/user_token')
+        try {
+            const accessUserName = req.user.userName
+            const accessAccessLevel = req.user.access
+           
+            if (accessUserName !== process.env.DEVun || accessAccessLevel !== "dev") {
+                return res.status(400).json({ message: 'Invalid credentials' });
+            }
+
+            console.log('raw.username', req.body.username, 'raw.access', req.body.access)
+            const username = sanitizeInput(req.body.username);
+            if (!username || username.length < 3 || username.length > 30) {
+                return res.status(400).json({ message: 'Invalid username' });
+            }
+            console.log('username', username)
+            const access = sanitizeInput(req.body.access); 
+            if (!access || typeof access !== 'string') {  // Adjust this according to what 'access' represents
+                return res.status(400).json({ message: 'Invalid access level' });
+            }    
+            console.log('access', access)        
+            const id = (await findRecordsSQL('users', [{username}]))[0].companyId;
+            const apiKey = (await findRecordsSQL('company', [{id}]))[0].apiKey;
+            console.log('apiKey', apiKey)
+            const token = generateToken(apiKey, username, access)
+            return res.status(200).json({ 
+                message: 'token generated',
+                token
+            });
+
+        } catch (err) {
+            res.status(500).json({ message: err.message });
         }
     });
 };
