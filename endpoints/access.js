@@ -7,7 +7,7 @@ const { findRecordsSQL } = require('../SQLite/functions');
  * @param {userName, password, company} app //required in body
  * if dev credentials passed, returns company info (or generates generic apiKey) as well as dev token
  * 
- * @returns {company name, token}
+ * @returns {apiKey, token}
  */
 module.exports = function (app) {
     app.post('/login', async (req, res) => {
@@ -35,12 +35,12 @@ module.exports = function (app) {
                             // Company exists, extract apiKey and generate dev token
                             const apiKey = records[0].apiKey; 
                             const token = generateToken(apiKey,process.env.DEVun,'dev');
-                            return res.status(200).json({ company, token });
+                            return res.status(200).json({ apiKey, token });
                         } else {
                             // Company does not exist, generate new API key
                             const newApiKey = generateApiKey();
                             const token = generateToken(newApiKey,process.env.DEVun,'dev');
-                            return res.status(200).json({ company: null, token: token });
+                            return res.status(200).json({ apiKey: null, token: token });
                         }
                     })
                     .catch(err => {
@@ -51,7 +51,7 @@ module.exports = function (app) {
                 // No company provided, just generate token
                 const apiKey = generateApiKey()
                 const token = generateToken(apiKey,process.env.DEVun,'dev');
-                return res.status(200).json({ company: null, token });
+                return res.status(200).json({ apiKey: null, token });
             }
         } else {
             // Authenticate user
@@ -81,7 +81,7 @@ module.exports = function (app) {
 
             apiKey = companyRecords[0].apiKey;
             const token = generateToken(apiKey,username,userRecords[0].access);
-            return res.status(200).json({ company: companyRecords[0].company, token });
+            return res.status(200).json({ apiKey: apiKey, token });
         }
     });    
 

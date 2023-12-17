@@ -12,6 +12,7 @@ if (!authPrivateKey) {
   throw new Error('Required environmental variable SECRETKEY is undefined');
 }
 
+// @returns {req.user{apiKey, userName, access}}
 async function verifyToken(req, res, next) {
   const path = (req.path)
   // Get auth header value
@@ -78,6 +79,7 @@ async function verifyToken(req, res, next) {
   } 
 }
 /*
+
 EXAMPLE OF HOW TO ADD AUTHENTICATION TO ENDPOINT
 app.post('/prm/twilio', verifyToken, async (req, res) => {
   <<code>>
@@ -125,7 +127,6 @@ function decodeToken(token) {
     const decoded = jwt.verify(token, authPrivateKey);
     // Return relevant information from the payload
     return {
-      success: true,
       apiKey: decoded.apiKey,
       userName: decoded.userName,
       access: decoded.access

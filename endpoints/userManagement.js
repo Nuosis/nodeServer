@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { verifyPassword, hashPassword } = require('../auth/security');
+const { verifyPassword, verifyToken, hashPassword } = require('../auth/security');
 const { createCompany, createUser } = require('../users/functions');
 const { findRecordsSQL } = require('../SQLite/functions');
 
@@ -64,7 +64,7 @@ module.exports = function (app) {
 
    // user creation endpoint
    /**
-    * @params (username, password, apiKey, accessLevel)
+    * @params (username, password, apiKey, newUserName, newPassword, accessLevel)
     *       userName & password of authorized user (must be admin or dev credentials)
     *       apiKey or new user's company
     *       accessLevel of new user. If unsupplied set to standard
@@ -73,6 +73,7 @@ module.exports = function (app) {
     */
    // super user or greater (admin or dev) 
     app.post('/createUser', async (req, res) => {
+        console.log('/createUser');
         const { username, password, apiKey, newUserName, newPassword, accessLevel } = req.body;
         if (!username || !password || !apiKey|| !newUserName || !newPassword) {
             return res.status(400).json({ message: 'username, password and apiKey are required' });
@@ -83,6 +84,22 @@ module.exports = function (app) {
         }
         if (username === process.env.DEVun && password === process.env.DEVpw) {
             console.log('dev auth initiated') 
+
+        
+            //CREATE
+            const newUserAccess = accessLevel || 'standard';
+            console.log('access: ', newUserAccess);
+            try {
+                    // Call the createUser function
+                    const reset = false;
+                    const newUser = await createUser(apiKey, newUserName, newPassword, newUserAccess, reset);
+                    res.status(201).json({ 
+                        message: 'User created successfully.',
+                    });
+            } catch (error) {
+                    console.error('Creation error:', error.message);
+                    res.status(500).json({ message: error.message });
+            };
         } else {       
             console.log('user auth initiated')
             const adminQuery = [{ username: username }];
@@ -100,20 +117,21 @@ module.exports = function (app) {
             if (accessLevel ==='dev') {
                 return res.status(400).json({ message: 'Insufficient access level to create dev user' })
             }
-        }
+
         
-        //CREATE
-        const newUserAccess = accessLevel || 'standard';
-        try {
-                // Call the createUser function
-                const newUser = await createUser(apiKey, newUserName, newPassword, newUserAccess);
-                res.status(201).json({ 
-                    message: 'User created successfully. Provide user with the username and password you provided. They will be asked to reset it on their initial log in', 
-                    user: { id: newUser.id, username: newUser.username }
-                });
-        } catch (error) {
-                console.error('Creation error:', error);
-                res.status(500).json({ message: 'Error in user creation' });
+            //CREATE
+            const newUserAccess = accessLevel || 'standard';
+            console.log('access: ', newUserAccess);
+            try {
+                    // Call the createUser function
+                    const newUser = await createUser(apiKey, newUserName, newPassword, newUserAccess);
+                    res.status(201).json({ 
+                        message: 'User created successfully. Provide user with the username and password you provided. They will be asked to reset it on their initial log in',
+                    });
+            } catch (error) {
+                    console.error('Creation error:', error.message);
+                    res.status(500).json({ message: error.message });
+            };
         }
     });
     /*
@@ -121,4 +139,38 @@ module.exports = function (app) {
     -H "Content-Type: application/json" \
     -d '{"username": "test@example.com", "password": "yourpassword"}'
     */
+
+    /**
+     * @params {}
+     */
+    app.get('/companyUsers', verifyToken, async (req, res) => {
+        console.log('/companyUsers')
+        try {
+            const username = req.user.userName
+            const apiKey = req.user.apiKey
+            const query = [{ apiKey }];
+            const company = await findRecordsSQL('company', query);
+            if (company.length === 0) {
+                return res.status(404).json({ message: 'apiKey invalid' });
+            }
+            const companyId = company[0].id
+            const userQuery = [{ companyId }];
+            const users = await findRecordsSQL('users', userQuery);
+            if (users.length === 0) {
+                return res.status(404).json({ message: 'no users found' });
+            } else {
+                const userArray = users.map(user => ({
+                    username: user.username,
+                    access: user.access
+                }));
+                return res.status(200).json({ 
+                    message: 'users found',
+                    userArray
+                });
+            }
+        } catch (err) {
+            // If there's an error in sending the email, return an error response
+            res.status(500).json({ message: 'Error getting company users', error: err.message });
+        }
+    });
 };

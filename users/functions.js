@@ -44,7 +44,7 @@ async function createCompany(company) {
     }
 }
 
-async function createUser(apiKey, username, password, access) {
+async function createUser(apiKey, username, password, access, reset) {
     console.log("createUser");
     
     // if access is not passed will be set to 'standard'
@@ -52,28 +52,30 @@ async function createUser(apiKey, username, password, access) {
         throw new Error('ApiKey, Username and Password are required');
     }
 
-    const companyInfo = findRecordsSQL('company', [{apiKey}]);
-    if (!companyInfo) {
+    const companyInfo = await findRecordsSQL('company', [{apiKey}]);
+    if (!companyInfo || !companyInfo.length) {
         throw new Error('Company not found');
     }
+    console.log("company found: ", companyInfo);
 
     const accessData = access || 'standard' ;
-    const companyId = companyInfo.id;
+    const companyId = companyInfo[0].id;
     const userId = generateUUID();
     const hashedPassword = await hashPassword(password);
     const timestamp = new Date().toISOString();
+    const resetPassword = reset || true;
 
     const userRecord = {
         id: userId,
-        idCompany: companyId,
+        companyId: companyId,
         username,
         password: hashedPassword,
         filemakerId: '', // Ignored during creation
-        verified: 0,
+        verified: false,
         created: timestamp,
         modified: timestamp,
         access: accessData,
-        resetPassword: true
+        resetPassword: resetPassword
     };
     console.log("userRecord", userRecord);
 
@@ -82,11 +84,10 @@ async function createUser(apiKey, username, password, access) {
         console.log('User created successfully');
         return { id: userId, username }; // Correct return value
     } catch (error) {
-        console.error('Error occurred:', error);
         console.error('Rolling back user creation.');
 
         try {
-            await deleteRecordSQL('users', { id: userId });
+            await deleteRecordSQL('users', [{ id: userId }]);
             console.log('User creation rolled back successfully.');
         } catch (rollbackError) {
             console.error('Error during rollback:', rollbackError);
