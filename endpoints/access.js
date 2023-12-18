@@ -100,7 +100,7 @@ module.exports = function (app, express) {
         }
     
         // Absolute path to your shell script
-        const scriptPath = '/Users/server/node/update.sh';
+        const scriptPath = '/Users/server/node/nodeServer/update.sh';
     
         // Execute the shell script
         exec(`bash ${scriptPath}`, (error, stdout, stderr) => {
