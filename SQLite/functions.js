@@ -10,7 +10,7 @@ const sqlite3 = require('sqlite3').verbose();
 function createRecordSQL(table, fieldValues) {
     return new Promise((resolve, reject) => {
         console.log('createRecordSQL');
-        const dbPath = './db.sqlite';
+        const dbPath = '../db.sqlite';
         const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
             if (err) {
                 console.error('Error opening database', err);
@@ -88,7 +88,7 @@ function findRecordsSQL(table, queryConditions) {
             reject(new Error('queryConditions must be an array'));
             return;
         }
-        const dbPath = './db.sqlite';
+        const dbPath = '../db.sqlite';
         const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
             if (err) {
                 console.error('Error opening database', err);
@@ -139,7 +139,7 @@ findRecordsSQL('users', [{ name: 'smith', state: 'ny' }])
  */
 function modifyAllSQL(table, queryConditions, modifyValues) {
     return new Promise((resolve, reject) => {
-        const dbPath = './db.sqlite';
+        const dbPath = '../db.sqlite';
         const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, async (err) => {
             if (err) {
                 console.error('Error opening database', err);
@@ -201,7 +201,7 @@ modifyAll('users', [{ name: 'smith', state: 'ny' }], { usage: 20 })
  */
 function modifyWhereSQL(table, queryConditions, modifyWHERE) {
     return new Promise((resolve, reject) => {
-        const dbPath = './db.sqlite';
+        const dbPath = '../db.sqlite';
         const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, async (err) => {
             if (err) {
                 console.error('Error opening database', err);
@@ -269,7 +269,7 @@ modifyWhereSQL('users', [{ state: 'ny' }], [
  */
 function deleteRecordSQL(table, queryConditions) {
     return new Promise((resolve, reject) => {
-        const dbPath = './db.sqlite';
+        const dbPath = '../db.sqlite';
         const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, async (err) => {
             if (err) {
                 console.error('Error opening database', err);
