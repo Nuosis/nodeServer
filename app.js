@@ -19,6 +19,7 @@ const prm = require('./endpoints/prm');
 const registration = require('./endpoints/registration');
 const logs = require('./endpoints/logging');
 const userManagement = require('./endpoints/userManagement');
+const { sendSMS } = require('./twilio/sms');
 const corsOptions = {
   origin: '*', // or '*' for allowing any origin
   methods: 'GET,POST', // Allowed methods
@@ -32,42 +33,47 @@ app.use(cors(corsOptions));
 
 
 
+try {
+  // DEFINE VARIABLES
+  const authPrivateKey = process.env.SECRETKEY;
+  if (!authPrivateKey) {
+    throw new Error('Required environmental variable authPrivateKey is undefined');
+  }
+  const host = process.env.DEVhost;
+  if (!host) {
+    throw new Error('Required environmental variable host is undefined');
+  }
 
-// DEFINE VARIABLES
-const authPrivateKey = process.env.SECRETKEY;
-if (!authPrivateKey) {
-  throw new Error('Required environmental variable authPrivateKey is undefined');
-}
-const host = process.env.DEVhost;
-if (!host) {
-  throw new Error('Required environmental variable host is undefined');
-}
+  const httpsOptions = {
+      key: readSSLFile('/etc/letsencrypt/live/selectjanitorial.com/privkey.pem'),
+      cert: readSSLFile('/etc/letsencrypt/live/selectjanitorial.com/fullchain.pem')
+  };
 
-const httpsOptions = {
-    key: readSSLFile('/etc/letsencrypt/live/selectjanitorial.com/privkey.pem'),
-    cert: readSSLFile('/etc/letsencrypt/live/selectjanitorial.com/fullchain.pem')
-};
 
-if (!httpsOptions.key || !httpsOptions.cert) {
-  // Start server without SSL for local testing
-  app.listen(process.env.PORT || 4040, () => {
-    console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040} without SSL`);
-  });
-} else {
-  // Start HTTPS server
-  https.createServer(httpsOptions, app).listen(4343, () => {
-    console.log(`[${new Date().toISOString()}] SSL Server is running on port 4343`);
-  });
+  if (!httpsOptions.key || !httpsOptions.cert) {
+    // Start server without SSL for local testing
+    app.listen(process.env.PORT || 4040, () => {
+      console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040} without SSL`);
+    });
+  } else {
+    // Start HTTPS server
+    https.createServer(httpsOptions, app).listen(4343, () => {
+      console.log(`[${new Date().toISOString()}] SSL Server is running on port 4343`);
+    });
 
-  // Start server without SSL for local testing
-  app.listen(process.env.PORT || 4040, () => {
-    console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040} without SSL`);
-  });
+    // Start server without SSL for local testing
+    app.listen(process.env.PORT || 4040, () => {
+      console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040} without SSL`);
+    });
+  }
+} catch (error) {
+  sendSMS(process.env.DEV_NUMBER, `Server start-up error: ${error.message}`);
+  console.error(`Server start-up error: ${error.message}`);
 }
 
 //ENDPOINT FILES
 basicEndpoint(app);
-access(app);
+access(app, express);
 jsonConversions(app);
 fileManager(app);
 prm(app);

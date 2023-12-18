@@ -165,6 +165,12 @@ function generateApiKey(length = 32) {
     return {apiKey: apiKey}
 }
 
+function validateGitHubRequest(body, signature, secret) {
+  const hmac = crypto.createHmac('sha1', secret);
+  const digest = 'sha1=' + hmac.update(JSON.stringify(body)).digest('hex');
+  return signature === digest;
+}
+
 module.exports = {
   generateUUID: uuidv4, 
   generateApiKey, 
@@ -174,5 +180,6 @@ module.exports = {
   verifyPassword,
   verifyToken,
   sanitizeInput,
-  readSSLFile
+  readSSLFile,
+  validateGitHubRequest
 };
