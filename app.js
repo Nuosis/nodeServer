@@ -46,8 +46,8 @@ try {
   }
 
   const httpsOptions = {
-      key: readSSLFile('/etc/letsencrypt/live/selectjanitorial.com/privkey.pem'),
-      cert: readSSLFile('/etc/letsencrypt/live/selectjanitorial.com/fullchain.pem')
+    key: readSSLFile('/etc/letsencrypt/live/server.claritybusinesssolutions.ca/privkey.pem'),
+    cert: readSSLFile('/etc/letsencrypt/live/server.claritybusinesssolutions.ca/fullchain.pem')
   };
 
 
