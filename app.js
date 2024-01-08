@@ -20,8 +20,9 @@ const registration = require('./endpoints/registration');
 const logs = require('./endpoints/logging');
 const userManagement = require('./endpoints/userManagement');
 const { sendSMS } = require('./twilio/sms');
+
 const corsOptions = {
-  origin: '*', // or '*' for allowing any origin
+  origin: ['http://localhost:1234', 'https://devtools.claritybusinesssolutions.ca'], // or '*' for allowing any origin
   methods: 'GET,POST', // Allowed methods
   allowedHeaders: 'Content-Type,Authorization', // Allowed headers
 };
