@@ -17,7 +17,7 @@ if curl -X GET http://localhost:4040 | grep -q "Hey good lookin’"; then
 fi
 
 # Change to the directory of your repository
-cd /Users/server/node/ || log_and_exit "Unable to change directory to /Users/server/node/"
+cd /Users/server/node/nodeServer || log_and_exit "Unable to change directory to /Users/server/node/"
 
 # Execute a git pull
 git pull || log_and_exit "Git pull failed."
