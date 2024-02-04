@@ -12,7 +12,7 @@ module.exports = function (app) {
     // /prm/twilio
     app.post('/prm/twilio', async (req, res) => {
         // console.log("Incoming request: ", req);
-        const server = host;
+        const server = process.env.DEVhost;
         const database = 'PRM';
         const username = process.env.PRMun;
         if (!username) {
