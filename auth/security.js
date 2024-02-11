@@ -112,6 +112,7 @@ async function hashPassword(password) {
 
 // Function to verify a password against a hashed password
 async function verifyPassword(password, hashedPassword) {
+  console.log(`password provided ${password} and hashed ${hashedPassword}`)
   return bcrypt.compare(password, hashedPassword);
 }
 

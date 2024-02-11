@@ -29,10 +29,26 @@ if [ ! -f "$PDF_PATH" ]; then
     exit 1
 fi
 
+# Existing check for the destination directory
 if [ ! -d "$DESTINATION_PATH" ]; then
-    echo "  : Destination directory does not exist: $DESTINATION_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
-    echo "$timestamp: END" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
-    exit 1
+    echo "  : Destination directory does not exist, attempting to create: $DESTINATION_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+    # Attempt to create the directory
+    mkdir -p "$DESTINATION_PATH"
+    if [ $? -eq 0 ]; then
+        echo "  : Destination directory created successfully." >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+        # Set permissions, e.g., 755 for read & execute by group/others, and write by owner
+        chmod 755 "$DESTINATION_PATH"
+        if [ $? -ne 0 ]; then
+            echo "  : Failed to set permissions on destination directory: $DESTINATION_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+            echo "$timestamp: END" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+            exit 1
+        fi
+    else
+        # Log if directory creation fails
+        echo "  : Failed to create destination directory: $DESTINATION_PATH" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+        echo "$timestamp: END" >> '/Library/FileMaker Server/Data/Documents/moveFileStdOut'
+        exit 1
+    fi
 fi
 
 if mv "$PDF_PATH" "$DESTINATION_PATH"; then

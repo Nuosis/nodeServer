@@ -91,7 +91,7 @@ function findRecordsSQL(table, queryConditions) {
             return;
         }
         const dbPath = path.resolve(__dirname, '../db.sqlite');
-        console.log(dbPath)
+        console.log("find called")
         const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
             if (err) {
                 console.error('Error opening database', err);
