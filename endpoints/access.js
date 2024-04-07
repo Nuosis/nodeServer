@@ -38,7 +38,7 @@ module.exports = function (app, express) {
                 const query = [{ company: company }];
                 findRecordsSQL('company', query)
                     .then(records => {
-                        console.log('records returned', JSON.stringify(records, null, 2));
+                        console.log('login: company records returned', JSON.stringify(records, null, 2));
                         if (records.length > 0) {
                             // Company exists, extract apiKey and generate dev token
                             console.log('company found')

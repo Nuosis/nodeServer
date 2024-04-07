@@ -1,14 +1,15 @@
 require('dotenv').config();
-const { verifyToken, sanitizeInput, generateToken } = require('../auth/security');
+const { verifyToken, sanitizeInput, generateToken, hashPassword } = require('../auth/security');
 const { createCompany, createUser } = require('../users/functions');
-const { findRecordsSQL } = require('../SQLite/functions');
+const { findRecordsSQL, modifyWhereSQL } = require('../SQLite/functions');
+const { sendSMS } = require('../twilio/sms');
 
 module.exports = function (app) {
     
     // Company Creation Endpoint
     /**
-     * @params {company, un, pw}
-     * @returns (message 'succes or no')
+     * @params {company, DEVun, DEVpw}
+     * @returns (message '{message, company, apiKey} or {error}')
      */
     // dev only !!!
     app.post('/createCompany', (req, res) => {
@@ -62,22 +63,52 @@ module.exports = function (app) {
     -d '{"company": "ACME Co","username": "test@example.com", "password": "yourpassword"}'
     */
 
+    /**
+     * @params {}
+     */
+    app.get('/companyUsers', verifyToken, async (req, res) => {
+        console.log('/companyUsers')
+        try {
+            const username = req.user.userName
+            const apiKey = req.user.apiKey
+            const companyId = req.user.companyId
+            const userQuery = [{ companyId }];
+            const users = await findRecordsSQL('users', userQuery);
+            if (users.length === 0) {
+                return res.status(404).json({ message: 'no users found' });
+            } else {
+                const userArray = users.map(user => ({
+                    username: user.username,
+                    access: user.access
+                }));
+                return res.status(200).json({ 
+                    message: 'users found',
+                    userArray
+                });
+            }
+        } catch (err) {
+            // If there's an error in sending the email, return an error response
+            res.status(500).json({ message: 'Error getting company users', error: err.message });
+        }
+    });
+
 
    // user creation endpoint
-   /**
+    /**
     * @params (username, password, apiKey, newUserName, newPassword, accessLevel)
     *       userName & password of authorized user (must be admin or dev credentials)
-    *       apiKey or new user's company
+    *       apiKey of new user's company
     *       accessLevel of new user. If unsupplied set to standard
     * 
     * @returns (user info)
     */
    // super user or greater (admin or dev) 
-    app.post('/createUser', async (req, res) => {
+    app.post('/createUser', verifyToken, async (req, res) => {
         console.log('/createUser');
-        const { username, password, apiKey, newUserName, newPassword, accessLevel } = req.body;
-        if (!username || !password || !apiKey|| !newUserName || !newPassword) {
-            return res.status(400).json({ message: 'username, password and apiKey are required' });
+        const { apiKey, username, userAccess } = req.user;
+        const { newUserName, newPassword, accessLevel } = req.body;
+        if (!newUserName || !newPassword) {
+            return res.status(400).json({ message: 'username, password for new user are required' });
         }
     
         if (username.length > 32 || password.length > 32) {
@@ -103,20 +134,17 @@ module.exports = function (app) {
             };
         } else {       
             console.log('user auth initiated')
-            const adminQuery = [{ username: username }];
-            const adminRecords = await findRecordsSQL('users', adminQuery);
-            if (adminRecords.length === 0) {
-                return res.status(404).json({ message: 'User not found' });
-            }
 
             //creators access level
-            const access = adminRecords[0].access
-            if (access !== 'admin' && access !== 'dev') {
-                return res.status(400).json({ message: 'Insufficient access level to create user' });
+            if (userAccess !== 'admin' && userAccess !== 'dev') {
+                console.error('access error: Insufficient Access Level', userAccess);
+                return res.status(400).json({ message: 'Insufficient credentials to create user' });
             }
 
+            //creators intented access level for new useraccess level
             if (accessLevel ==='dev') {
-                return res.status(400).json({ message: 'Insufficient access level to create dev user' })
+                console.error('access error: Admin users cannot create dev users');
+                return res.status(400).json({ message: 'Insufficient credentials to create dev user' })
             }
 
         
@@ -141,46 +169,67 @@ module.exports = function (app) {
     -d '{"username": "test@example.com", "password": "yourpassword"}'
     */
 
+    // user update endpoint
     /**
-     * @params {}
+     * @params (newPassword, newAccessLevel, newReset)
+     *       apiKey: API key of the user's company decoded from token
+     *       username: Username of the user to update decoded from token
+     *       newPassword: New password for the user (optional)
+     *       newAccessLevel: New access level for the user (optional) 
+     *       newReset: Change reset password for the user (optional) 
+     * 
+     * @returns (confirmation message)
      */
-    app.get('/companyUsers', verifyToken, async (req, res) => {
-        console.log('/companyUsers')
+    app.post('/updateUser', verifyToken, async (req, res) => {
+        console.log('/updateUser');
+        const { apiKey, username, userId } = req.user;
+        console.log('requestUser: ',req.user)
+        const { newPassword, newAccessLevel, newReset } = req.body;
+
+        // Basic validation
+        if (!newPassword || !newAccessLevel || !newReset) {
+            return res.status(400).json({ message: 'no updated values provided' });
+        }
+
         try {
-            const username = req.user.userName
-            const apiKey = req.user.apiKey
-            const query = [{ apiKey }];
-            const company = await findRecordsSQL('company', query);
-            if (company.length === 0) {
-                return res.status(404).json({ message: 'apiKey invalid' });
+            // Confirm the user making the request has sufficient privileges
+            
+            const requesterInfo = await findRecordsSQL('users', [{ userId }]);
+            if (userId !== 'dev' || requesterInfo.access !== 'admin') {
+                console.error("access denied: access level",requesterInfo.access,'devUser',userId)
+                return res.status(403).json({ message: 'Insufficient privileges' });
             }
-            const companyId = company[0].id
-            const userQuery = [{ companyId }];
-            const users = await findRecordsSQL('users', userQuery);
-            if (users.length === 0) {
-                return res.status(404).json({ message: 'no users found' });
-            } else {
-                const userArray = users.map(user => ({
-                    username: user.username,
-                    access: user.access
-                }));
-                return res.status(200).json({ 
-                    message: 'users found',
-                    userArray
-                });
+
+            // Prepare modifications for updateUser function
+            const modifications = [];
+            if (newPassword) {
+                const hashedPassword = await hashPassword(newPassword);
+                modifications.push({ field: 'password', setTo: hashedPassword });
             }
-        } catch (err) {
-            // If there's an error in sending the email, return an error response
-            res.status(500).json({ message: 'Error getting company users', error: err.message });
+            if (newAccessLevel) {
+                modifications.push({ field: 'access', setTo: newAccessLevel });
+            }
+            if (newReset) {
+                modifications.push({ field: 'resetPassword', setTo: newReset });
+            }
+
+            // Update user details in the database
+            await modifyWhereSQL('users', [{ userId }], modifications);
+            console.log('User updated successfully.');
+            res.status(200).json({ message: 'User updated successfully' });
+        } catch (error) {
+            console.error('Error updating user:', error);
+            res.status(500).json({ message: error.message });
         }
     });
+
 
     app.post('/user_token', verifyToken, async (req, res) => {
         console.log('/user_token')
         try {
             const accessUserName = req.user.userName
             const accessAccessLevel = req.user.access
-           
+        
             if (accessUserName !== process.env.DEVun || accessAccessLevel !== "dev") {
                 return res.status(400).json({ message: 'Invalid credentials' });
             }

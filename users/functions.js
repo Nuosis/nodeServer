@@ -96,6 +96,61 @@ async function createUser(apiKey, username, password, access, reset) {
         throw error; // Rethrow the error after attempting rollback
     }
 }
+
+async function updateUser(apiKey, username, newPassword, newAccess = null) {
+    console.log("updateUser");
+    try {
+        // Basic validation
+        if (!apiKey || !username || !newPassword) {
+            throw new Error('ApiKey, Username, and New Password are required');
+        }
+
+        // Confirm company exists
+        const companyInfo = await findRecordsSQL('company', [{apiKey}]);
+        if (!companyInfo || companyInfo.length === 0) {
+            throw new Error('Company not found');
+        } 
+        const companyId = companyInfo[0].id
+        if (!companyId || companyId.length === 0) {
+            throw new Error('CompanyId not found');
+        } 
+
+        // Confirm user exists
+        const userInfo = await findRecordsSQL('users', [{username, companyId}]);
+        if (!userInfo || userInfo.length === 0) {
+            throw new Error('User not found');
+        }
+
+        const hashedPassword = await hashPassword(newPassword); // Assumes a hashPassword function
+
+        // Prepare modifications
+        const modifications = [];
+        const currentDate = new Date().toISOString();
+
+        if (newPassword) {
+            const hashedPassword = await hashPassword(newPassword);
+            modifications.push({ field: "password", setTo: hashedPassword });
+        }
+        if (newAccessLevel) {
+            modifications.push({ field: "access", setTo: newAccessLevel });
+        }
+        if (newReset !== null) {
+            // Assuming newReset is a boolean and the database expects an integer (1 for true, 0 for false)
+            modifications.push({ field: "resetPassword", setTo: newReset ? 1 : 0 });
+        }
+        // Always update the modified timestamp
+        modifications.push({ field: "modified", setTo: currentDate });
+
+        // Update user details in the database
+        await modifyWhereSQL('users', [{ username }], modifications);
+        console.log('User updated successfully.');
+        return { username, updated: true };
+    } catch (error) {
+        console.error('Error updating user:', error);
+        throw error;
+    }
+}
+
 /*
  * 
  * FOR READ, UPDATE AND DELETE
@@ -106,5 +161,6 @@ async function createUser(apiKey, username, password, access, reset) {
 
 module.exports = {
     createUser,
+    updateUser,
     createCompany
 };

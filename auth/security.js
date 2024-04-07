@@ -14,6 +14,7 @@ if (!authPrivateKey) {
 
 // @returns {req.user{apiKey, userName, access}}
 async function verifyToken(req, res, next) {
+  console.log('verifyTokenCalled')
   const path = (req.path)
   // Get auth header value
   const bearerHeader = req.headers['authorization'] || req.headers['Authorization'] ;
@@ -24,24 +25,40 @@ async function verifyToken(req, res, next) {
     const bearer = bearerHeader.split(' ');
     // Get token from array
     const bearerToken = bearer[1];
-    //console.log('token:',bearerToken)
+    // console.log('token:',bearerToken)
     
     try {
       // Verify the token
       const decoded = await new Promise((resolve, reject) => {
         jwt.verify(bearerToken, authPrivateKey, (err, authData) => {
           if (err) {
+            console.error('JWT Verification Error:', err);
             reject(err);
           } else {
             resolve(authData);
           }
         });
       });
-      const key = decoded.apiKey
-      console.log(decoded)
-  
+
+      await findRecordsSQL('users', [{ username: decoded.userName }])
+        .then(records => {
+          console.log('user records found:', records)
+          decoded.userId = records[0].id
+          decoded.userAccess = records[0].access
+        })
+        .catch(err => console.error('Error finding records:', err));
+
+      await findRecordsSQL('company', [{ apiKey: decoded.apiKey }])
+      .then(records => {
+        console.log('company record found:', records)
+        decoded.companyId = records[0].id
+        decoded.company = records[0].company
+      })
+      .catch(err => console.error('Error finding records:', err));
+
       // Attach decoded data to request object
       req.user = decoded;
+      console.log('decodedInit: ', decoded)
 
       const tableName = 'userAccess';
       const recordID = uuidv4();
@@ -52,7 +69,10 @@ async function verifyToken(req, res, next) {
       const sqliteTimestampFormat = currentDate.toISOString().replace('T', ' ').replace(/\.\d+Z$/, ''); // Formats to 'YYYY-MM-DD HH:MM:SS'
       const newAccess = {
           id: recordID,
-          userID: key,
+          apiKey: decoded.apiKey,
+          userId: decoded.userName === 'Dev' ? 'dev' : decoded.userId,
+          userAccess: decoded.userAccess,
+          userName: decoded.userName,
           endPoint: path,
           date: sqliteDateFormat,
           created: sqliteTimestampFormat,
@@ -75,7 +95,8 @@ async function verifyToken(req, res, next) {
       res.sendStatus(403); // Forbidden
     }
   } else {
-      res.status(401).send('No token provided');
+    console.error('No authorization token/api key provided in request headers.');
+    res.status(401).send('No token/key provided');
   } 
 }
 /*

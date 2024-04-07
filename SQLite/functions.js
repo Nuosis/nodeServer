@@ -82,16 +82,17 @@ createRecordSQL(tableName, newUser)
     .then(records => console.log('Records found:', records))
     .catch(err => console.error('Error finding records:', err));
 */
-function findRecordsSQL(table, queryConditions) {
+async function findRecordsSQL(table, queryConditions) {
     return new Promise((resolve, reject) => {
+        console.log("find called")
         // Check if queryConditions is an array
         if (!Array.isArray(queryConditions)) {
             console.error('queryConditions must be an array');
             reject(new Error('queryConditions must be an array'));
             return;
         }
-        const dbPath = path.resolve(__dirname, '../db.sqlite');
-        console.log("find called")
+        const dbPath = path.resolve(__dirname, '../db.sqlite')
+        //console.log("find called")
         const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
             if (err) {
                 console.error('Error opening database', err);
@@ -109,7 +110,7 @@ function findRecordsSQL(table, queryConditions) {
 
         const queryParams = queryConditions.flatMap(condition => Object.values(condition));
         const selectSQL = `SELECT * FROM ${table} WHERE ${whereClauses}`;
-        console.log('sql search: ',selectSQL)
+        // console.log('sql search: ',selectSQL)
 
         db.all(selectSQL, queryParams, (err, rows) => {
             db.close();
@@ -126,10 +127,18 @@ function findRecordsSQL(table, queryConditions) {
     });
 }
 /*
-Example usage
-findRecordsSQL('users', [{ name: 'smith', state: 'ny' }])
-    .then(records => console.log('Records found:', records))
-    .catch(err => console.error('Error finding records:', err));
+//Example usage
+async function findUserRecords() {
+    try {
+        const records = await findRecordsSQL('users', [{ username: 'msDev' }]);
+        console.log('Records found:', records);
+    } catch (err) {
+        console.error('Error finding records:', err);
+    }
+}
+
+// Call the function
+findUserRecords();
 */
 
 /**
@@ -140,7 +149,7 @@ findRecordsSQL('users', [{ name: 'smith', state: 'ny' }])
  * @param {Object} modifyValues An object containing fields to modify and their new values.
  * @returns {Promise<void>} A promise representing the operation's completion.
  */
-function modifyAllSQL(table, queryConditions, modifyValues) {
+async function modifyAllSQL(table, queryConditions, modifyValues) {
     return new Promise((resolve, reject) => {
         const dbPath = path.resolve(__dirname, '../db.sqlite');
         console.log(dbPath)
@@ -203,7 +212,7 @@ modifyAll('users', [{ name: 'smith', state: 'ny' }], { usage: 20 })
  * @param {Object[]} modifyWHERE Array of modification rules.
  * @returns {Promise<void>} A promise representing the operation's completion.
  */
-function modifyWhereSQL(table, queryConditions, modifyWHERE) {
+async function modifyWhereSQL(table, queryConditions, modifyWHERE) {
     return new Promise((resolve, reject) => {
         const dbPath = path.resolve(__dirname, '../db.sqlite');
         console.log(dbPath)
@@ -272,7 +281,7 @@ modifyWhereSQL('users', [{ state: 'ny' }], [
  * @param {Object[]} queryConditions Array of objects representing query conditions.
  * @returns {Promise<void>} A promise representing the operation's completion.
  */
-function deleteRecordSQL(table, queryConditions) {
+async function deleteRecordSQL(table, queryConditions) {
     return new Promise((resolve, reject) => {
         const dbPath = path.resolve(__dirname, '../db.sqlite');
         console.log(dbPath)

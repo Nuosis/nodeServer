@@ -1,7 +1,6 @@
 require('dotenv').config();
 const { verifyToken, verifyPassword } = require('../auth/security');
 const { createRecordSQL, findRecordsSQL } = require('../SQLite/functions');
-const { createUser, createCompany } = require('../users/functions');
 
 module.exports = function (app) {
     // SEND VERIFICATION EMAIL
