@@ -12,6 +12,7 @@ module.exports = function (app) {
      */
     // dev only !!!
     app.post('/createCompany', (req, res) => {
+        console.log('create called');
         const { company, DEVun, DEVpw } = req.body;
     
         if (!company || !DEVun || !DEVpw) {
@@ -109,8 +110,8 @@ module.exports = function (app) {
             }
 
             //creators access level
-            const access = adminRecords.access
-            if (access != 'admin' || 'dev') {
+            const access = adminRecords[0].access
+            if (access !== 'admin' && access !== 'dev') {
                 return res.status(400).json({ message: 'Insufficient access level to create user' });
             }
 
@@ -121,7 +122,7 @@ module.exports = function (app) {
         
             //CREATE
             const newUserAccess = accessLevel || 'standard';
-            console.log('access: ', newUserAccess);
+            console.log('accessLevel: ', newUserAccess);
             try {
                     // Call the createUser function
                     const newUser = await createUser(apiKey, newUserName, newPassword, newUserAccess);

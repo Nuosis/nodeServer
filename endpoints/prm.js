@@ -11,7 +11,7 @@ module.exports = function (app) {
     // PRM/TWILIO END POINT
     // /prm/twilio
     app.post('/prm/twilio', async (req, res) => {
-        // console.log("Incoming request: ", req);
+        console.log("Incoming prm/twilio...");
         const server = process.env.DEVhost;
         const database = 'PRM';
         const username = process.env.PRMun;
