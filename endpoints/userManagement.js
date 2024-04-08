@@ -104,17 +104,17 @@ module.exports = function (app) {
     */
    // super user or greater (admin or dev) 
     app.post('/createUser', verifyToken, async (req, res) => {
-        console.log('/createUser');
-        const { apiKey, username, userAccess } = req.user;
+        console.log(`${new Date().toISOString()} /createUser`)
+        const { apiKey, userName, userAccess } = req.user;
         const { newUserName, newPassword, accessLevel } = req.body;
         if (!newUserName || !newPassword) {
-            return res.status(400).json({ message: 'username, password for new user are required' });
+            return res.status(400).json({ message: 'userName, password for new user are required' });
         }
     
-        if (username.length > 32 || password.length > 32) {
-            return res.status(400).json({ message: 'Username or password too long' });
+        if (newUserName.length > 32 || newPassword.length > 32) {
+            return res.status(400).json({ message: 'userName or password too long' });
         }
-        if (username === process.env.DEVun && password === process.env.DEVpw) {
+        if (userName === process.env.DEVun && password === process.env.DEVpw) {
             console.log('dev auth initiated') 
 
         
@@ -155,7 +155,7 @@ module.exports = function (app) {
                     // Call the createUser function
                     const newUser = await createUser(apiKey, newUserName, newPassword, newUserAccess);
                     res.status(201).json({ 
-                        message: 'User created successfully. Provide user with the username and password you provided. They will be asked to reset it on their initial log in',
+                        message: 'User created successfully. Provide user with the user name and password you provided. They will be asked to reset it on their initial log in',
                     });
             } catch (error) {
                     console.error('Creation error:', error.message);

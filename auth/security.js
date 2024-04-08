@@ -14,7 +14,7 @@ if (!authPrivateKey) {
 
 // @returns {req.user{apiKey, userName, access}}
 async function verifyToken(req, res, next) {
-  console.log('verifyTokenCalled')
+  console.log(`${new Date().toISOString()} /verifyTokenCalled`)
   const path = (req.path)
   // Get auth header value
   const bearerHeader = req.headers['authorization'] || req.headers['Authorization'] ;
@@ -39,18 +39,20 @@ async function verifyToken(req, res, next) {
           }
         });
       });
+      // console.log('decoded:',decoded)
 
       await findRecordsSQL('users', [{ username: decoded.userName }])
         .then(records => {
-          console.log('user records found:', records)
+          // console.log('user records found:', records)
           decoded.userId = records[0].id
           decoded.userAccess = records[0].access
+          // console.log('decoded with User:',decoded)
         })
         .catch(err => console.error('Error finding records:', err));
 
       await findRecordsSQL('company', [{ apiKey: decoded.apiKey }])
       .then(records => {
-        console.log('company record found:', records)
+        // console.log('company record found:', records)
         decoded.companyId = records[0].id
         decoded.company = records[0].company
       })
@@ -58,7 +60,7 @@ async function verifyToken(req, res, next) {
 
       // Attach decoded data to request object
       req.user = decoded;
-      console.log('decodedInit: ', decoded)
+      // console.log('decoded: ', req.user)
 
       const tableName = 'userAccess';
       const recordID = uuidv4();
@@ -71,7 +73,6 @@ async function verifyToken(req, res, next) {
           id: recordID,
           apiKey: decoded.apiKey,
           userId: decoded.userName === 'Dev' ? 'dev' : decoded.userId,
-          userAccess: decoded.userAccess,
           userName: decoded.userName,
           endPoint: path,
           date: sqliteDateFormat,
@@ -80,12 +81,13 @@ async function verifyToken(req, res, next) {
       };
 
 
-      console.log('access record')
+      // console.log('access record created')
       createRecordSQL(tableName, newAccess)
         .then(lastID => {
-            console.log(`New access record added`);
+            //console.log(`New access record added`);
         })
         .catch(error => {
+          console.log(`New access record error (see error out)`);
             console.error('Failed to add new access record:', error);
       });
   
@@ -133,7 +135,7 @@ async function hashPassword(password) {
 
 // Function to verify a password against a hashed password
 async function verifyPassword(password, hashedPassword) {
-  console.log(`password provided ${password} and hashed ${hashedPassword}`)
+  console.log(`compairing passwords`)
   return bcrypt.compare(password, hashedPassword);
 }
 

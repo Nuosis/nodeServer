@@ -9,7 +9,7 @@ if (!gitHubSecret) {
     throw new Error('Required environmental variable GITHUB is undefined');
 }
 /**
- * @param {userName, password, company} app //required in body
+ * @param {userName, password, apiKey} app //required in body
  * if dev credentials passed, returns company info (or generates generic apiKey) as well as dev token
  * 
  * @returns {apiKey, token}
@@ -17,7 +17,7 @@ if (!gitHubSecret) {
 module.exports = function (app, express) {
     app.post('/login', async (req, res) => {
         console.log(`${new Date().toISOString()} /login`);
-        const { username, password, company } = req.body;
+        const { username, password, apiKey } = req.body;
     
         // Validate username and password
         if (!username || !password) {
@@ -34,8 +34,8 @@ module.exports = function (app, express) {
         if (username === process.env.DEVun && password === process.env.DEVpw) {
             console.log('dev auth initiated')
             // Handle company logic
-            if (company) {
-                const query = [{ company: company }];
+            if (apiKey) {
+                const query = [{ apiKey }];
                 findRecordsSQL('company', query)
                     .then(records => {
                         console.log('login: company records returned', JSON.stringify(records, null, 2));
@@ -67,7 +67,22 @@ module.exports = function (app, express) {
         } else {
             // Authenticate user
             console.log('user auth initiated')
-            const userQuery = [{ username: username }];
+            // Validate username and password
+            if (!apiKey ) {
+                console.log("dev error apiKey not passed")
+                console.error("dev error apiKey not passed on /login")
+                return res.status(400).json({ message: 'dev error. this endpoint is missing required variable: apiKey' });
+            }
+            const coQuery = [{ apiKey }];
+            const coRecords = await findRecordsSQL('company', coQuery);
+            if (coRecords.length === 0) {
+                console.log(`no company found`)
+                return res.status(404).json({ message: 'User not found' });
+            }
+            const companyId = coRecords[0].id;
+            const companyName = coRecords[0].company;
+
+            const userQuery = [{ username, companyId }];
             const userRecords = await findRecordsSQL('users', userQuery);
 
             if (userRecords.length === 0) {
@@ -76,30 +91,22 @@ module.exports = function (app, express) {
             }
 
             const userRecord = userRecords[0];
+            // console.log("userRecord Found: ",userRecord)
 
             // Verify password
-            console.log(`verifying user ${JSON.stringify(userRecord)}`)
             const passwordVerified = await verifyPassword(password, userRecord.password);
+            console.log(`password verified: `,passwordVerified)
             if (!passwordVerified) {
                 console.log(`password failed`)
                 return res.status(401).json({ message: 'Invalid password' });
             }
             const userAccess = userRecord.access;
             const userReset = userRecord.resetPassword;
+            // console.log(`generateToken: `,apiKey,username,userAccess)
 
-            // Get company API key
-            const companyQuery = [{ id: userRecord.companyId }];
-            const companyRecords = await findRecordsSQL('company', companyQuery);
-
-            if (companyRecords.length === 0) {
-                console.log(`unable to find user's company`)
-                return res.status(404).json({ message: 'Company associated with user not found' });
-            }
-
-            apiKey = companyRecords[0].apiKey;
-            retreivedCompanyName = companyRecords[0].company;
-            const token = generateToken(apiKey,username,userRecords[0].access);
-            return res.status(200).json({ apiKey, token, userAccess, userReset, company: retreivedCompanyName });
+            const token = generateToken(apiKey,username,userAccess)
+            console.log(`Token generated`)
+            return res.status(200).json({ apiKey, token, userAccess, userReset, companyName });
         }
     });    
 

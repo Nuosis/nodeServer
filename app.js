@@ -19,12 +19,13 @@ const prm = require('./endpoints/prm');
 const registration = require('./endpoints/registration');
 const logs = require('./endpoints/logging');
 const userManagement = require('./endpoints/userManagement');
+const clarityData = require('./endpoints/clarityData');
 const { sendSMS } = require('./twilio/sms');
 
 const corsOptions = {
-  origin: ['http://localhost:1234', 'http://localhost:4040', 'https://devtools.claritybusinesssolutions.ca'], // or '*' for allowing any origin
-  methods: 'GET,POST', // Allowed methods
-  allowedHeaders: 'Content-Type,Authorization', // Allowed headers
+  origin: ['http://localhost:3000', 'http://localhost:1234', 'http://localhost:4040', 'https://devtools.claritybusinesssolutions.ca'], // or '*' for allowing any origin
+  methods: ['GET','POST'], // Allowed methods
+  allowedHeaders: ['Content-Type','Authorization'] // Allowed headers
 };
 
 console.log("v.1.0.0")
@@ -83,4 +84,5 @@ prm(app);
 registration(app);
 logs(app);
 userManagement(app);
+clarityData(app);
 

@@ -10,16 +10,16 @@ const path = require('path');
  */
 function createRecordSQL(table, fieldValues) {
     return new Promise((resolve, reject) => {
-        console.log('createRecordSQL');
+        // console.log('createRecordSQL');
         const dbPath = path.resolve(__dirname, '../db.sqlite');
-        console.log(dbPath)
+        //console.log(dbPath)
         const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
             if (err) {
                 console.error('Error opening database', err);
                 reject(err);
                 return;
             }
-            console.log('Connected to the SQLite database.');
+            // console.log('Connected to the SQLite database.');
 
             const fields = Object.keys(fieldValues);
             const values = Object.values(fieldValues);
@@ -37,7 +37,7 @@ function createRecordSQL(table, fieldValues) {
                     reject(err);
                     return;
                 }
-                console.log(`A record has been inserted with rowid ${this.lastID}`);
+                // console.log(`A record has been inserted with rowid ${this.lastID}`);
                 resolve(this.lastID);
 
                 db.close((err) => {
@@ -46,7 +46,7 @@ function createRecordSQL(table, fieldValues) {
                         reject(err);
                         return;
                     }
-                    console.log('Closed the database connection.');
+                    //console.log('Closed the database connection.');
                 });
             });
         });
@@ -84,7 +84,7 @@ createRecordSQL(tableName, newUser)
 */
 async function findRecordsSQL(table, queryConditions) {
     return new Promise((resolve, reject) => {
-        console.log("find called")
+        // console.log("find called")
         // Check if queryConditions is an array
         if (!Array.isArray(queryConditions)) {
             console.error('queryConditions must be an array');
@@ -99,7 +99,7 @@ async function findRecordsSQL(table, queryConditions) {
                 reject(err);
                 return;
             }
-            console.log('Connected to the SQLite database.');
+            // console.log('Connected to the SQLite database.');
         });
 
         // Construct the WHERE clause
@@ -121,7 +121,7 @@ async function findRecordsSQL(table, queryConditions) {
                 return;
             }
 
-            console.log('Query executed successfully.');
+            // console.log('Query executed successfully.');
             resolve(rows);
         });
     });
@@ -159,7 +159,7 @@ async function modifyAllSQL(table, queryConditions, modifyValues) {
                 reject(err);
                 return;
             }
-            console.log('Connected to the SQLite database.');
+            // console.log('Connected to the SQLite database.');
 
             try {
                 // First, find the records that match the query conditions
@@ -215,14 +215,14 @@ modifyAll('users', [{ name: 'smith', state: 'ny' }], { usage: 20 })
 async function modifyWhereSQL(table, queryConditions, modifyWHERE) {
     return new Promise((resolve, reject) => {
         const dbPath = path.resolve(__dirname, '../db.sqlite');
-        console.log(dbPath)
+        console.log("ModifyWhere Called")
         const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, async (err) => {
             if (err) {
                 console.error('Error opening database', err);
                 reject(err);
                 return;
             }
-            console.log('Connected to the SQLite database.');
+            // console.log('Connected to the SQLite database.');
 
             try {
                 // Find records that match the query conditions
@@ -284,14 +284,14 @@ modifyWhereSQL('users', [{ state: 'ny' }], [
 async function deleteRecordSQL(table, queryConditions) {
     return new Promise((resolve, reject) => {
         const dbPath = path.resolve(__dirname, '../db.sqlite');
-        console.log(dbPath)
+        console.log("Delete record Called")
         const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, async (err) => {
             if (err) {
                 console.error('Error opening database', err);
                 reject(err);
                 return;
             }
-            console.log('Connected to the SQLite database.');
+            //console.log('Connected to the SQLite database.');
 
             try {
                 // Find records that match the query conditions
