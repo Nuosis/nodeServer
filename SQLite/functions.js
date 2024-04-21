@@ -150,6 +150,7 @@ findUserRecords();
  * @returns {Promise<void>} A promise representing the operation's completion.
  */
 async function modifyAllSQL(table, queryConditions, modifyValues) {
+    console.log('modify all called')
     return new Promise((resolve, reject) => {
         const dbPath = path.resolve(__dirname, '../db.sqlite');
         console.log(dbPath)

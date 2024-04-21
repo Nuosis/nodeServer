@@ -1,7 +1,7 @@
 require('dotenv').config();
-const { verifyToken, sanitizeInput, generateToken, hashPassword } = require('../auth/security');
+const { verifyToken, sanitizeInput, generateToken, hashPassword, deTokenize } = require('../auth/security');
 const { createCompany, createUser } = require('../users/functions');
-const { findRecordsSQL, modifyWhereSQL } = require('../SQLite/functions');
+const { findRecordsSQL, modifyAllSQL } = require('../SQLite/functions');
 const { sendSMS } = require('../twilio/sms');
 
 module.exports = function (app) {
@@ -104,19 +104,20 @@ module.exports = function (app) {
     */
    // super user or greater (admin or dev) 
     app.post('/createUser', verifyToken, async (req, res) => {
-        console.log(`${new Date().toISOString()} /createUser`)
-        const { apiKey, userName, userAccess } = req.user;
+        console.log(`/createUser`)
+        const { apiKey, userName } = req.user;
+        const userAccess = req.user.access;
         const { newUserName, newPassword, accessLevel } = req.body;
+        console.log({apiKey,userName,userAccess,newUserName,newPassword,accessLevel})
         if (!newUserName || !newPassword) {
             return res.status(400).json({ message: 'userName, password for new user are required' });
         }
     
-        if (newUserName.length > 32 || newPassword.length > 32) {
+        if (newUserName.length > 120 || newPassword.length > 120) {
             return res.status(400).json({ message: 'userName or password too long' });
         }
-        if (userName === process.env.DEVun && password === process.env.DEVpw) {
+        if (userAccess === 'dev') {
             console.log('dev auth initiated') 
-
         
             //CREATE
             const newUserAccess = accessLevel || 'standard';
@@ -154,9 +155,10 @@ module.exports = function (app) {
             try {
                     // Call the createUser function
                     const newUser = await createUser(apiKey, newUserName, newPassword, newUserAccess);
-                    res.status(201).json({ 
-                        message: 'User created successfully. Provide user with the user name and password you provided. They will be asked to reset it on their initial log in',
-                    });
+                    const newUserToken = generateToken(apiKey,newUser.username,newUserAccess)
+                    res.status(201).json(
+                        {username: newUser.username,token: newUserToken}
+                    );
             } catch (error) {
                     console.error('Creation error:', error.message);
                     res.status(500).json({ message: error.message });
@@ -171,9 +173,7 @@ module.exports = function (app) {
 
     // user update endpoint
     /**
-     * @params (newPassword, newAccessLevel, newReset)
-     *       apiKey: API key of the user's company decoded from token
-     *       username: Username of the user to update decoded from token
+     * @params (newPassword, newAccessLevel, newReset, newFileMakerID, newVerified)
      *       newPassword: New password for the user (optional)
      *       newAccessLevel: New access level for the user (optional) 
      *       newReset: Change reset password for the user (optional) 
@@ -182,39 +182,68 @@ module.exports = function (app) {
      */
     app.post('/updateUser', verifyToken, async (req, res) => {
         console.log('/updateUser');
-        const { apiKey, username, userId } = req.user;
-        console.log('requestUser: ',req.user)
-        const { newPassword, newAccessLevel, newReset } = req.body;
+        const { userId, access } = req.user;
+        // console.log('requestUser: ',req.user)
+        const { newPassword, newAccessLevel, newReset, newFileMakerID, newVerified, userToken } = req.body;
+        // console.log('requestBody: ',req.body)
+        let companyId = "";
+        let userName = "";
+        try {
+            const userInfo = deTokenize(userToken)
+            //console.log({userInfo});
+            const userCompanyInfo = await findRecordsSQL('company', [{ apiKey: userInfo.decoded.apiKey }]);
+            //console.log({userCompanyInfo});
+            companyId = userCompanyInfo[0].id
+            userName = userInfo.decoded.userName
+        } catch (error) {
+            console.error('Error collecting user data:', error);
+            res.status(500).json({ message: error.message });
+        }
 
         // Basic validation
-        if (!newPassword || !newAccessLevel || !newReset) {
+        if (!newPassword && !newAccessLevel && !newReset && !newFileMakerID && !newVerified) {
+            console.log('empty update variables: ');
+            return res.status(400).json({ message: 'no updated values provided' });
+        }
+        if (!companyId || !userName ) {
+            console.log('required user variables unset');
             return res.status(400).json({ message: 'no updated values provided' });
         }
 
+
         try {
             // Confirm the user making the request has sufficient privileges
-            
-            const requesterInfo = await findRecordsSQL('users', [{ userId }]);
-            if (userId !== 'dev' || requesterInfo.access !== 'admin') {
-                console.error("access denied: access level",requesterInfo.access,'devUser',userId)
+            if ((newPassword || newAccessLevel) && (userId !== 'dev' || access !== 'admin')) {
+                console.log('access denied!');
+                console.error("access denied: access level",access,'devUser',userId)
                 return res.status(403).json({ message: 'Insufficient privileges' });
             }
+            
+            // const requesterInfo = await findRecordsSQL('users', [{ id: userId }]);
 
             // Prepare modifications for updateUser function
-            const modifications = [];
+            const modifications = {};
             if (newPassword) {
                 const hashedPassword = await hashPassword(newPassword);
-                modifications.push({ field: 'password', setTo: hashedPassword });
+                modifications.password = hashedPassword;
             }
             if (newAccessLevel) {
-                modifications.push({ field: 'access', setTo: newAccessLevel });
+                modifications.access = newAccessLevel;
             }
             if (newReset) {
-                modifications.push({ field: 'resetPassword', setTo: newReset });
+                modifications.resetPassword = newReset;
             }
+            if (newFileMakerID) {
+                modifications.filemakerId = newFileMakerID;
+            }
+            if (newVerified) {
+                modifications.verified = true;
+            }
+            console.log({modifications});
+
 
             // Update user details in the database
-            await modifyWhereSQL('users', [{ userId }], modifications);
+            await modifyAllSQL('users', [{ username: userName, companyId }], modifications);
             console.log('User updated successfully.');
             res.status(200).json({ message: 'User updated successfully' });
         } catch (error) {

@@ -40,16 +40,15 @@ async function verifyToken(req, res, next) {
         });
       });
       // console.log('decoded:',decoded)
-
-      await findRecordsSQL('users', [{ username: decoded.userName }])
-        .then(records => {
-          // console.log('user records found:', records)
-          decoded.userId = records[0].id
-          decoded.userAccess = records[0].access
-          // console.log('decoded with User:',decoded)
-        })
-        .catch(err => console.error('Error finding records:', err));
-
+      if(decoded.access!=='dev'){
+        await findRecordsSQL('users', [{ username: decoded.userName }])
+          .then(records => {
+            // console.log('user records found:', records)
+            decoded.userId = records[0].id
+            // console.log('decoded with User:',decoded)
+          })
+          .catch(err => console.error('Error finding records:', err));
+      }
       await findRecordsSQL('company', [{ apiKey: decoded.apiKey }])
       .then(records => {
         // console.log('company record found:', records)
@@ -57,7 +56,7 @@ async function verifyToken(req, res, next) {
         decoded.company = records[0].company
       })
       .catch(err => console.error('Error finding records:', err));
-
+      
       // Attach decoded data to request object
       req.user = decoded;
       // console.log('decoded: ', req.user)
@@ -88,7 +87,7 @@ async function verifyToken(req, res, next) {
         })
         .catch(error => {
           console.log(`New access record error (see error out)`);
-            console.error('Failed to add new access record:', error);
+          console.error('Failed to add new access record:', error);
       });
   
       // Next middleware
@@ -179,6 +178,33 @@ function generateToken(apiKey, userName, access) {
   }
 }
 
+// Function to generate a token from an apiKey
+function tokenize(data) {
+  try {
+      // Sign
+      const token = jwt.sign({ data }, authPrivateKey, { algorithm: 'HS256' });
+      return token;
+  } catch (error) {
+      console.error("Error generating token:", error);
+      throw new Error("Token generation failed");
+  }
+}
+
+function deTokenize(token) {
+  try {
+    const decoded = jwt.verify(token, authPrivateKey);
+    // Return relevant information from the payload
+    return {
+      decoded
+    };
+  } catch (err) {
+    console.error('Invalid or expired token:', err.message);
+    return {
+      success: false,
+      error: err.message
+    };
+  }
+}
 
 // Function to generate an API key
 function generateApiKey(length = 32) {
@@ -205,5 +231,7 @@ module.exports = {
   verifyToken,
   sanitizeInput,
   readSSLFile,
-  validateGitHubRequest
+  validateGitHubRequest,
+  tokenize,
+  deTokenize,
 };

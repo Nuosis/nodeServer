@@ -17,7 +17,7 @@ if (!gitHubSecret) {
 module.exports = function (app, express) {
     app.post('/login', async (req, res) => {
         console.log(`${new Date().toISOString()} /login`);
-        const { username, password, apiKey } = req.body;
+        const { username, password, apiKey, company } = req.body;
     
         // Validate username and password
         if (!username || !password) {
@@ -25,46 +25,43 @@ module.exports = function (app, express) {
             return res.status(400).json({ message: 'Username and password are required' });
         }
     
-        if (username.length > 32 || password.length > 32) {
+        if (username.length > 120 || password.length > 120) {
             console.log("username or password invalid")
             return res.status(400).json({ message: 'Username or password too long' });
         }
     
-        // Check developer credentials
-        if (username === process.env.DEVun && password === process.env.DEVpw) {
-            console.log('dev auth initiated')
-            // Handle company logic
+    // Check developer credentials
+    if (username === process.env.DEVun && password === process.env.DEVpw) {
+        console.log('dev auth initiated');
+        try {
+            let query =[]
             if (apiKey) {
-                const query = [{ apiKey }];
-                findRecordsSQL('company', query)
-                    .then(records => {
-                        console.log('login: company records returned', JSON.stringify(records, null, 2));
-                        if (records.length > 0) {
-                            // Company exists, extract apiKey and generate dev token
-                            console.log('company found')
-                            const apiKey = records[0].apiKey; 
-                            const token = generateToken(apiKey,process.env.DEVun,'dev');
-                            return res.status(200).json({ apiKey, token, userAccess: "dev" });
-                        } else {
-                            console.log('company not found')
-                            // Company does not exist, generate new API key
-                            const newApiKey = generateApiKey();
-                            const token = generateToken(newApiKey,process.env.DEVun,'dev');
-                            return res.status(200).json({ apiKey: null, token: token, userAccess: "dev" });
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Error finding records:', err);
-                        return res.status(500).json({ message: 'Internal server error' });
-                    });
+                query = [{ apiKey }];
+            } else if (company) {
+                query = [{ company }];
             } else {
-                // No company provided, just generate token
-                const apiKey = generateApiKey()
-                const token = generateToken(apiKey,process.env.DEVun,'dev');
-                // userAccess, userReset, company: re
+                const newApiKey = generateApiKey();
+                const token = generateToken(newApiKey, process.env.DEVun, 'dev');
                 return res.status(200).json({ apiKey: null, token, userAccess: "dev" });
             }
-        } else {
+            const records = await findRecordsSQL('company', query);
+            // console.log('login: company records returned', JSON.stringify(records, null, 2));
+            if (records.length > 0) {
+                console.log('company found');
+                const key = records[0].apiKey;
+                const token = generateToken(key, process.env.DEVun, 'dev');
+                return res.status(200).json({ apiKey: key, token, userAccess: "dev" })
+            } else {
+                console.log('company not found');
+                const key = generateApiKey();
+                const token = generateToken(key, process.env.DEVun, 'dev');
+                return res.status(200).json({ apiKey: null, token, userAccess: "dev" })
+            };
+        } catch (err) {
+            console.error('Error in dev authentication:', err);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+    } else {
             // Authenticate user
             console.log('user auth initiated')
             // Validate username and password
@@ -102,11 +99,12 @@ module.exports = function (app, express) {
             }
             const userAccess = userRecord.access;
             const userReset = userRecord.resetPassword;
-            // console.log(`generateToken: `,apiKey,username,userAccess)
+            const filemakerId = userRecord.filemakerId;
+            console.log(`generatedToken: `,filemakerId,userReset,userAccess)
 
-            const token = generateToken(apiKey,username,userAccess)
+            const token = generateToken(username,userAccess,filemakerId,companyName)
             console.log(`Token generated`)
-            return res.status(200).json({ apiKey, token, userAccess, userReset, companyName });
+            return res.status(200).json({ token,userReset,username,userAccess,filemakerId,companyName});
         }
     });    
 

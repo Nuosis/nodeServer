@@ -47,7 +47,7 @@ async function clarityDataApi(req, res) {
         }
 
         // Dynamically call the appropriate function based on the method parameter
-        if(method ==='createRecord' || method === 'findRecord') {
+        if(method ==='createRecord') {
             const utc = Date.now();  
             // Create a date object for the current time in "America/Vancouver" timezone
             const vancouverDate = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Vancouver" }));
@@ -73,6 +73,8 @@ async function clarityDataApi(req, res) {
                 "~ModificationTimestamp": fileMakerDate
             });
             // console.log("params: ", {params})
+            responseData = await fmCrud[method](server, database, layout, token, params);
+        } else if(method === 'findRecord'){
             responseData = await fmCrud[method](server, database, layout, token, params);
         } else {
             // Ensure recordID is correctly defined or passed for these methods

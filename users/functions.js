@@ -63,7 +63,7 @@ async function createUser(apiKey, username, password, access, reset) {
     const userId = generateUUID();
     const hashedPassword = await hashPassword(password);
     const timestamp = new Date().toISOString();
-    const resetPassword = reset || true;
+    const resetPassword = reset || false;
 
     const userRecord = {
         id: userId,

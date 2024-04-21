@@ -20,10 +20,12 @@ const registration = require('./endpoints/registration');
 const logs = require('./endpoints/logging');
 const userManagement = require('./endpoints/userManagement');
 const clarityData = require('./endpoints/clarityData');
+const formManagement = require('./endpoints/formManagement');
 const { sendSMS } = require('./twilio/sms');
+const stripe = require('./endpoints/stripe')
 
 const corsOptions = {
-  origin: ['http://localhost:3000', 'http://localhost:1234', 'http://localhost:4040', 'https://devtools.claritybusinesssolutions.ca'], // or '*' for allowing any origin
+  origin: ['http://localhost:3000', 'http://localhost:1234', 'http://localhost:4040', 'https://devtools.claritybusinesssolutions.ca', 'https://selecthomecleaning.ca'], // or '*' for allowing any origin
   methods: ['GET','POST'], // Allowed methods
   allowedHeaders: ['Content-Type','Authorization'] // Allowed headers
 };
@@ -85,4 +87,6 @@ registration(app);
 logs(app);
 userManagement(app);
 clarityData(app);
+formManagement(app);
+stripe(app);
 

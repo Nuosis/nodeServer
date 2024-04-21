@@ -21,6 +21,7 @@
     "jsonwebtoken": "^9.0.2",
     "node-mailjet": "^6.0.4",
     "sqlite3": "^5.1.6",
+    "stripe": "^15.3.0",
     "twilio": "^4.20.0",
     "uuid": "^9.0.1",
     "validator": "^13.11.0"
