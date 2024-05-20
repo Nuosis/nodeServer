@@ -1,9 +1,9 @@
 const { verifyToken } = require('../auth/security');
-const {routeStripeRequest} = require('../stripe/functions');
+const {routeQBORequest} = require('../QBO/functions');
 
 module.exports = function (app) {
     // Endpoint to handle Stripe requests
-    app.post('/stripe', verifyToken, async (req, res) => {
+    app.post('/qbo', verifyToken, async (req, res) => {
         try {
             // Extract apiKey, method, and params from request body
             const { method, params } = req.body;
@@ -15,7 +15,7 @@ module.exports = function (app) {
             }
 
             // Call routeRequest function
-            const result = await routeStripeRequest(apiKey, method, params);
+            const result = await routeQBORequest(apiKey, method, params);
 
             // Send response
             res.status(200).json(result);

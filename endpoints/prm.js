@@ -11,23 +11,25 @@ module.exports = function (app) {
     // PRM/TWILIO END POINT
     // /prm/twilio
     app.post('/prm/twilio', async (req, res) => {
-        console.log("Incoming prm/twilio...");
+        console.log("");
+        console.log("");
+        console.log(`${new Date().toISOString()} Incoming... prm/twilio`)
         const server = process.env.DEVhost;
         const database = 'PRM';
         const username = process.env.PRMun;
         if (!username) {
-        throw new Error('Required environmental variable username is undefined');
+            throw new Error('Required environmental variable username is undefined');
         }
         const password = process.env.PRMpw;
         if (!username) {
-        throw new Error('Required environmental variable password is undefined');
+            throw new Error('Required environmental variable password is undefined');
         }
         const dataString = req.body;
     
         if (!dataString) {
-        throw new Error('Required body.file is undefined');
+            throw new Error('Required body.file is undefined');
         }
-        console.log('server:',server,'db:',database,'username',username,'pw',password,'data',dataString)
+        //console.log('server:',server,'db:',database,'username',username,'pw',password,'data',dataString)
         
         // Parse the 'data' string into a JavaScript object
         const incomingData = JSON.stringify(dataString);
@@ -37,19 +39,19 @@ module.exports = function (app) {
         
         /* GET FILEMAKER TOKEN */ 
         try {
-        token = await getFileMakerToken(server, database, username, password);
-        console.log("Token:", token);
+            token = await getFileMakerToken(server, database, username, password);
+            //console.log("Token:", token);
         } catch (error) {
-        const statusCode = error.response?.status || 500;
-        const errorMessage = error.response?.statusText || "Internal Server Error";
-    
-        console.log("Error getting FileMaker token:", {'status': statusCode, 'errorMessage':errorMessage} );
-        //res.status(500).send("Error in getting FileMaker token");
-        res.status(statusCode).send({
-            error: "Error in getting FileMaker token",
-            details: errorMessage
-        });
-        return; // Early return on error
+            const statusCode = error.response?.status || 500;
+            const errorMessage = error.response?.statusText || "Internal Server Error";
+        
+            console.log("Error getting FileMaker token:", {'status': statusCode, 'errorMessage':errorMessage} );
+            //res.status(500).send("Error in getting FileMaker token");
+            res.status(statusCode).send({
+                error: "Error in getting FileMaker token",
+                details: errorMessage
+            });
+            return; // Early return on error
         }
         
         
@@ -66,35 +68,35 @@ module.exports = function (app) {
         const layout = 'devWebpayloads'
         
         try {
-        const recordCreationResult = await createRecord(server, database, layout, token, params);
+            const recordCreationResult = await createRecord(server, database, layout, token, params);
         } catch (error) {    
             // Extracting meaningful error information
-        const errorInfo = {
-            status: error.response?.status || 500, // Use optional chaining to handle cases where response is undefined
-            statusText: error.response?.statusText || "Internal Server Error",
-            message: error.message,
-            apiError: error.response?.data || "No additional error info" // Assuming the API error details are in error.response.data
-        };
-    
-        console.error("Meaningful Error Info:", errorInfo);
-    
-        res.status(errorInfo.status).send({
-            error: "Error in processing request",
-            details: errorInfo
-        });
-        return;
-        //console.error("Error creating record", error);
-        //res.status(500).send("Error setting information");
+            const errorInfo = {
+                status: error.response?.status || 500, // Use optional chaining to handle cases where response is undefined
+                statusText: error.response?.statusText || "Internal Server Error",
+                message: error.message,
+                apiError: error.response?.data || "No additional error info" // Assuming the API error details are in error.response.data
+            };
+        
+            console.error("Meaningful Error Info:", errorInfo);
+        
+            res.status(errorInfo.status).send({
+                error: "Error in processing request",
+                details: errorInfo
+            });
+            return;
+            //console.error("Error creating record", error);
+            //res.status(500).send("Error setting information");
         }    
     
         
         /* RELEASE FILEMAKER TOKEN */
         try {
-        await releaseFileMakerToken(server, database, token);
+            await releaseFileMakerToken(server, database, token);
         } catch (error) {
-        console.error("Error releasing FileMaker token:", error);
-        res.status(500).send("Error in releasing FileMaker token");
-        return; // Early return on error
+            console.error("Error releasing FileMaker token:", error);
+            res.status(500).send("Error in releasing FileMaker token");
+            return; // Early return on error
         }
     
         res.status(200).send('received and set');

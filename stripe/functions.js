@@ -1,10 +1,10 @@
 const stripe = require('stripe');
-const { getFileMakerToken ,releaseFileMakerToken} = require('../dataAPI/access');
-const { findRecord } = require('../dataAPI/functions');
-const {deTokenize} = require('../auth/security');
+const {findRecord} = require('../dataAPI/functions');
+const {deTokenize, tokenize} = require('../auth/security');
 const {findRecordsSQL} = require('../SQLite/functions');
+const access = require('../dataAPI/access');
 
-export async function routeStripeRequest(apiKey, method, params) {
+async function routeStripeRequest(apiKey, method, params) {
     // Extract company idFilemaker using the apiKey
     const companyQueryConditions = [{apiKey}];
     const companyIdFilemaker = await findRecordsSQL('company', companyQueryConditions);
@@ -17,6 +17,11 @@ export async function routeStripeRequest(apiKey, method, params) {
     // Acquire token for FileMaker Data API access
     const userName = process.env.DEVun;
     const password = process.env.DEVpw;
+    const server = "server.claritybusinesssolutions.ca";
+    const database = "clarityData";
+    let layout = ""
+    let response = ""
+    let query = ""
     let token;
     try {
         token = await access.getFileMakerToken(server, database, userName, password);
@@ -26,17 +31,23 @@ export async function routeStripeRequest(apiKey, method, params) {
         }
 
         // Query FileMaker to retrieve stripeKey
-        const query = [{ '_orgID': companyIdFilemaker },{ 'moduleName': 'STRIPE' },{ 'f_active': 1 }];
-        const layout = 'dapiModuleSelected'; // should use modulesSelected (store tokenized apiKeys there)
-        const response = await findRecord(server, database, layout, token, { query });
+        query = [{ '_orgID': companyIdFilemaker },{ 'moduleName': 'STRIPE' },{ 'f_active': 1 }];
+        layout = 'dapiModuleSelected'; // should use modulesSelected (store tokenized apiKeys there)
+        response = await findRecord(server, database, layout, token, { query });
 
-        if (!response || !response.data || !response.data[0] || !response.data[0].fieldData || !response.data[0].fieldData.stripeKey) {
-            console.error('Stripe key not found in response');
-            return { error: 'Stripe key not found' };
+        if (!response || !response.data || !response.data[0] || !response.data[0].fieldData) {
+            console.error('Stripe Module ID not found');
+            return { error: 'Stripe module not found. Either the ordID is worong on Stripe is no longer active' };
         }
+        const stripeKeyId = response.data[0].fieldData["__ID"];
+        query = [{ '_fkID': stripeKeyId }];
+        layout = 'dapiRecordDetails';
+        response = await findRecord(server, database, layout, token, { query });
 
         // Extract and decode the stripeKey
-        const stripeKey = deTokenize(response.data[0].fieldData.stripeKey);
+        const stripeToken = response.data[0].fieldData.data;
+        const stripeKeyData = deTokenize(stripeToken.token);
+        const stripeKey = stripeKeyData.decoded.data.secret;
 
         // Route the call based on the method
         switch (method) {
@@ -50,6 +61,8 @@ export async function routeStripeRequest(apiKey, method, params) {
                 return retrievePaymentDetails(stripeKey, params.paymentIntentId);
             case 'addCustomer':
                 return addCustomer(stripeKey, params.email, params.name);
+            case 'findCustomer':
+                return getCustomer(stripeKey, params.email);
             case 'updateCustomer':
                 return updateCustomer(stripeKey, params.customerId, params.updateParams);
             case 'addPaymentMethod':
@@ -73,15 +86,35 @@ export async function routeStripeRequest(apiKey, method, params) {
     } finally {
         // Release the FileMaker token
         if (token) {
-            await releaseFileMakerToken(server, database, token);
+            await access.releaseFileMakerToken(server, database, token);
         }
     }
 }
 
-module.exports = routeStripeRequest;
-
 
 //CUSTOMERS
+// Function to get a customer by email
+async function getCustomer(stripeKey, email) {
+    const stripe = require('stripe')(stripeKey);
+    try {
+        // Search for customers with the specified email
+        const customers = await stripe.customers.search({
+            query: `email:'${email}'`,
+        });
+        // Check if we found any customers
+        if (customers.data.length > 0) {
+            // Return the first matching customer
+            return customers.data[0];
+        } else {
+            // No customer found with that email
+            console.log('No customer found with that email');
+            return null;
+        }
+    } catch (err) {
+        console.error('Failed to retrieve customer:', err);
+        throw new Error('Failed to retrieve customer');
+    }
+}
 
 //add customer
 async function addCustomer(stripeKey, email, name) {
@@ -117,7 +150,6 @@ async function updateCustomer(stripeKey, customerId, updateParams) {
 
 
 //PAYEMNTS
-
 //add payment method
 async function addPaymentMethod(stripeKey, customerId, paymentMethodId) {
     const stripe = require('stripe')(stripeKey);
@@ -133,7 +165,6 @@ async function addPaymentMethod(stripeKey, customerId, paymentMethodId) {
         throw new Error('Failed to add payment method');
     }
 }
-
 
 // Function to create a payment intent
 async function createPaymentIntent(stripeKey, amount, currency) {
@@ -202,7 +233,6 @@ async function retrievePaymentDetails(stripeKey, paymentIntentId) {
     }
 }
 
-
 //SUBSCRIPTIONS
 async function createSubscription(stripeKey, customerId, priceId) {
     const stripe = require('stripe')(stripeKey);
@@ -260,3 +290,8 @@ async function retrieveSubscription(stripeKey, subscriptionId) {
         throw new Error('Failed to retrieve subscription');
     }
 }
+
+
+module.exports = {
+    routeStripeRequest,
+};

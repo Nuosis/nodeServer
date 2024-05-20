@@ -1,4 +1,4 @@
-const { sanitizeInput, tokenize, deTokenize } = require('../auth/security');
+const { tokenize, deTokenize } = require('../auth/security');
 
 
 module.exports = function (app) {

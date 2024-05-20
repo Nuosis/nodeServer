@@ -22,7 +22,8 @@ const userManagement = require('./endpoints/userManagement');
 const clarityData = require('./endpoints/clarityData');
 const formManagement = require('./endpoints/formManagement');
 const { sendSMS } = require('./twilio/sms');
-const stripe = require('./endpoints/stripe')
+const stripe = require('./endpoints/stripe');
+const qbo = require('./endpoints/qbo')
 
 const corsOptions = {
   origin: ['http://localhost:3000', 'http://localhost:1234', 'http://localhost:4040', 'https://devtools.claritybusinesssolutions.ca', 'https://selecthomecleaning.ca'], // or '*' for allowing any origin
@@ -89,4 +90,5 @@ userManagement(app);
 clarityData(app);
 formManagement(app);
 stripe(app);
+qbo(app);
 
