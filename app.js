@@ -9,6 +9,7 @@ const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const sqlite3 = require('sqlite3').verbose();
 const { readSSLFile } = require('./auth/security');
+const setupWebSocketServer = require('./webServices/websocket');
 
 // Require the endpoint modules
 const basicEndpoint = require('./endpoints/basic');
@@ -26,7 +27,15 @@ const stripe = require('./endpoints/stripe');
 const qbo = require('./endpoints/qbo')
 
 const corsOptions = {
-  origin: ['http://localhost:3000', 'http://localhost:1234', 'http://localhost:4040', 'https://devtools.claritybusinesssolutions.ca', 'https://selecthomecleaning.ca'], // or '*' for allowing any origin
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:1234', 
+    'http://localhost:4040', 
+    'https://devtools.claritybusinesssolutions.ca', 
+    'https://selecthomecleaning.ca', 
+    'https://selecthomecleaning.app', 
+    'https://www.selecthomecleaning.app'
+  ], // or '*' for allowing any origin
   methods: ['GET','POST'], // Allowed methods
   allowedHeaders: ['Content-Type','Authorization'] // Allowed headers
 };
@@ -56,15 +65,16 @@ try {
     cert: readSSLFile('/etc/letsencrypt/live/server.claritybusinesssolutions.ca/fullchain.pem')
   };
 
+  let server;
 
   if (!httpsOptions.key || !httpsOptions.cert) {
     // Start server without SSL for local testing
-    app.listen(process.env.PORT || 4040, () => {
+    server = app.listen(process.env.PORT || 4040, () => {
       console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040} without SSL`);
     });
   } else {
     // Start HTTPS server
-    https.createServer(httpsOptions, app).listen(4343, () => {
+    server = https.createServer(httpsOptions, app).listen(4343, () => {
       console.log(`[${new Date().toISOString()}] SSL Server is running on port 4343`);
     });
 
@@ -73,6 +83,10 @@ try {
       console.log(`[${new Date().toISOString()}] Server is running on port ${process.env.PORT || 4040} without SSL`);
     });
   }
+
+  // Setup WebSocket server
+  setupWebSocketServer(server);
+
 } catch (error) {
   sendSMS(process.env.DEV_NUMBER, `Server start-up error: ${error.message}`);
   console.error(`Server start-up error: ${error.message}`);

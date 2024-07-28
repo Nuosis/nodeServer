@@ -21,11 +21,13 @@
     "jsonwebtoken": "^9.0.2",
     "node-mailjet": "^6.0.4",
     "node-quickbooks": "^2.0.45",
+    "request": "^2.88.2",
     "sqlite3": "^5.1.6",
     "stripe": "^15.7.0",
     "twilio": "^4.20.0",
     "uuid": "^9.0.1",
-    "validator": "^13.11.0"
+    "validator": "^13.11.0",
+    "ws": "^8.17.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

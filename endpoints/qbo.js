@@ -4,9 +4,12 @@ const {routeQBORequest} = require('../QBO/functions');
 module.exports = function (app) {
     // Endpoint to handle Stripe requests
     app.post('/qbo', verifyToken, async (req, res) => {
+        console.log(`${new Date().toISOString()} /qbo`)
         try {
             // Extract apiKey, method, and params from request body
             const { method, params } = req.body;
+            console.log(method, params.query)
+            //console.log({params})
             const apiKey = req.user.apiKey
 
             // Validate apiKey and method

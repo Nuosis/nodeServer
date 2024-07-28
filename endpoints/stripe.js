@@ -4,9 +4,11 @@ const {routeStripeRequest} = require('../stripe/functions');
 module.exports = function (app) {
     // Endpoint to handle Stripe requests
     app.post('/stripe', verifyToken, async (req, res) => {
+        console.log('/stripe')
         try {
             // Extract apiKey, method, and params from request body
             const { method, params } = req.body;
+            console.log('method: ',method)
             const apiKey = req.user.apiKey
 
             // Validate apiKey and method
@@ -16,7 +18,6 @@ module.exports = function (app) {
 
             // Call routeRequest function
             const result = await routeStripeRequest(apiKey, method, params);
-
             // Send response
             res.status(200).json(result);
         } catch (err) {

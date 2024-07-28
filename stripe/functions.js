@@ -31,28 +31,33 @@ async function routeStripeRequest(apiKey, method, params) {
         }
 
         // Query FileMaker to retrieve stripeKey
-        query = [{ '_orgID': companyIdFilemaker },{ 'moduleName': 'STRIPE' },{ 'f_active': 1 }];
-        layout = 'dapiModuleSelected'; // should use modulesSelected (store tokenized apiKeys there)
+        query = [{ '_orgID': companyIdFilemaker[0].id, 'moduleName': 'STRIPE','f_active': 1 }];
+        layout = 'dapiModulesSelected'; // should use modulesSelected (store tokenized apiKeys there)
         response = await findRecord(server, database, layout, token, { query });
+        //console.log(response.response.data)
 
-        if (!response || !response.data || !response.data[0] || !response.data[0].fieldData) {
+        if (!response.response || !response.response.data || !response.response.data[0] || !response.response.data[0].fieldData) {
             console.error('Stripe Module ID not found');
             return { error: 'Stripe module not found. Either the ordID is worong on Stripe is no longer active' };
         }
-        const stripeKeyId = response.data[0].fieldData["__ID"];
+        const stripeKeyId = response.response.data[0].fieldData["__ID"]
+        //console.log(stripeKeyId)
         query = [{ '_fkID': stripeKeyId }];
         layout = 'dapiRecordDetails';
         response = await findRecord(server, database, layout, token, { query });
 
         // Extract and decode the stripeKey
-        const stripeToken = response.data[0].fieldData.data;
+        const stripeToken = JSON.parse(response.response.data[0].fieldData.data);
+        //console.log(stripeToken)
         const stripeKeyData = deTokenize(stripeToken.token);
+        //console.log({stripeKeyData})
         const stripeKey = stripeKeyData.decoded.data.secret;
+        //console.log({stripeKey})
 
         // Route the call based on the method
         switch (method) {
             case 'createPaymentIntent':
-                return createPaymentIntent(stripeKey, params.amount, params.currency)
+                return createPaymentIntent(stripeKey, params.amount, params.currency, params.customerId)
             case 'processPayment':
                 return processPayment(stripeKey, params.paymentMethodId, params.amount, params.currency);
             case 'refundPayment':
@@ -65,6 +70,8 @@ async function routeStripeRequest(apiKey, method, params) {
                 return getCustomer(stripeKey, params.email);
             case 'updateCustomer':
                 return updateCustomer(stripeKey, params.customerId, params.updateParams);
+            case 'hasValidCard':
+                return hasValidCard(stripeKey, params.customerId);
             case 'addPaymentMethod':
                 return addPaymentMethod(stripeKey, params.customerId, params.paymentMethodId);
             case 'createSubscription':
@@ -147,34 +154,63 @@ async function updateCustomer(stripeKey, customerId, updateParams) {
     }
 }
 
+//get customer has valid cc
+async function hasValidCard(stripeKey, customerId) {
+    const stripe = require('stripe')(stripeKey);
+    //console.log(customerId)
+    try {
+        // Retrieve the list of payment methods for the customer
+        const paymentMethods = await stripe.paymentMethods.list({
+            customer: customerId,
+            type: 'card'
+        });
+        //console.log({paymentMethods})
 
+        // Check if there are any valid card payment methods
+        if (paymentMethods.data.length > 0) {
+            return true; // Customer has a valid card on file
+        } else {
+            return false; // Customer does not have a valid card on file
+        }
+    } catch (error) {
+        console.error('Error checking payment methods:', error);
+        throw new Error('Failed to check payment methods');
+    }
+}
 
 //PAYEMNTS
-//add payment method
 async function addPaymentMethod(stripeKey, customerId, paymentMethodId) {
     const stripe = require('stripe')(stripeKey);
 
     try {
-        const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
+        // Attach the existing payment method to the customer
+        // console.log("paymentMethodId: ",paymentMethodId)
+        const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
             customer: customerId,
         });
-
-        return paymentMethod;
+        console.log("attachedPaymentMethod: ", attachedPaymentMethod)
+        return attachedPaymentMethod;
     } catch (err) {
-        console.error(err);
+        console.error('Failed to add payment method:', err);
         throw new Error('Failed to add payment method');
     }
 }
 
 // Function to create a payment intent
-async function createPaymentIntent(stripeKey, amount, currency) {
+async function createPaymentIntent(stripeKey, amount, currency, customerId = null) {
     const stripeInstance = stripe(stripeKey);
 
     try {
-        const paymentIntent = await stripeInstance.paymentIntents.create({
+        const paymentIntentParams = {
             amount,
             currency,
-        });
+        };
+
+        if (customerId) {
+            paymentIntentParams.customer = customerId;
+        }
+
+        const paymentIntent = await stripeInstance.paymentIntents.create(paymentIntentParams);
 
         return { clientSecret: paymentIntent.client_secret };
     } catch (err) {

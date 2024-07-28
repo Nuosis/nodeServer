@@ -6,26 +6,49 @@ const fmCrud = require('../dataAPI/functions');
 // Unified ClarityData API Endpoint
 async function clarityDataApi(req, res) {
     const { server, database, layout, params, method, recordID } = req.body;
-    console.log("/clarityDataAPI method: ",method)
+    console.log("/clarityDataAPI method:",method)
 
     // Validate required parameters
-    if(method ==='createRecord' || method === 'findRecord') {
+    if( method === 'createRecord' || method === 'findRecord') {
         if (!server || !database || !layout || !params ) {
-            console.log("error: missing parameter")
+            console.log("error: missing parameter 1")
+            return res.status(400).json({ error: 'Missing required parameters' });
+        }
+    } else if ( method === 'deleteRecord' ) {
+        if (!server ) {
+            console.log("error: missing parameter: server")
+            return res.status(400).json({ error: 'Missing required parameters' });
+        }
+        if (!database) {
+            console.log("error: missing parameter: database")
+            return res.status(400).json({ error: 'Missing required parameters' });
+        }
+        if (!layout) {
+            console.log("error: missing parameter: layout")
+            return res.status(400).json({ error: 'Missing required parameters' });
+        }
+        if (!recordID ) {
+            console.log("error: missing parameter: recordID")
+            return res.status(400).json({ error: 'Missing required parameters' });
+        }
+        console.log("parameters passed")
+    } else if (method === 'runScript') {
+        if (!server || !database || !layout || !params || !params.scriptName) {
+            console.log("error: missing parameter for runScript");
             return res.status(400).json({ error: 'Missing required parameters' });
         }
     } else if ( !method ) {
-            console.log("error: missing method parameter")
+            console.log("error: missing method parameter 2")
             return res.status(400).json({ error: 'Missing required parameters' });
     } else {
         if (!server || !database || !layout || !params || !recordID) {
-            console.log("error: missing parameter")
+            console.log("error: missing parameter 3")
             return res.status(400).json({ error: 'Missing required parameters' });
         }
     }
 
     // Check if the method is supported
-    if (!['createRecord', 'findRecord', 'editRecord', 'deleteRecord', 'duplicateRecord'].includes(method)) {
+    if (!['createRecord', 'findRecord', 'editRecord', 'deleteRecord', 'duplicateRecord', 'runScript'].includes(method)) {
         console.log("error: unsupported method")
         return res.status(400).json({ error: 'Unsupported method' });
     }
@@ -76,7 +99,11 @@ async function clarityDataApi(req, res) {
             responseData = await fmCrud[method](server, database, layout, token, params);
         } else if(method === 'findRecord'){
             responseData = await fmCrud[method](server, database, layout, token, params);
-        } else {
+        } else if(method === 'deleteRecord'){
+            responseData = await fmCrud[method](server, database, layout, recordID, token);
+        } else if (method === 'runScript') {
+            responseData = await fmCrud.runScript(server, database, layout, token, params);
+        }  else {
             // Ensure recordID is correctly defined or passed for these methods
             responseData = await fmCrud[method](server, database, layout, recordID, token, params);
         }
@@ -87,7 +114,7 @@ async function clarityDataApi(req, res) {
         // Return the response data from FileMaker API
         return res.status(200).json(responseData);
     } catch (error) {
-        console.error(`${method} ERROR:`, error);
+        console.error(`${method} ERROR:`);
 
         // Attempt to release the token in case of error, if acquired
         if (token) {
@@ -98,7 +125,7 @@ async function clarityDataApi(req, res) {
             }
         }
 
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.response.data.messages });
     }
 }
 

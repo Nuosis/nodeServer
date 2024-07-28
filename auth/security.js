@@ -18,6 +18,7 @@ async function verifyToken(req, res, next) {
   const path = (req.path)
   // Get auth header value
   const bearerHeader = req.headers['authorization'] || req.headers['Authorization'] ;
+  let decoded
   
   // Check if bearer is undefined
   if (typeof bearerHeader !== 'undefined') {
@@ -29,7 +30,7 @@ async function verifyToken(req, res, next) {
     
     try {
       // Verify the token
-      const decoded = await new Promise((resolve, reject) => {
+      decoded = await new Promise((resolve, reject) => {
         jwt.verify(bearerToken, authPrivateKey, (err, authData) => {
           if (err) {
             console.error('JWT Verification Error:', err);
@@ -39,24 +40,28 @@ async function verifyToken(req, res, next) {
           }
         });
       });
-      // console.log('decoded:',decoded)
-      if(decoded.access!=='dev'){
-        await findRecordsSQL('users', [{ username: decoded.userName }])
-          .then(records => {
-            // console.log('user records found:', records)
-            decoded.userId = records[0].id
-            // console.log('decoded with User:',decoded)
-          })
-          .catch(err => console.error('Error finding records:', err));
+      //console.log('decoded:',decoded)
+      if(decoded.data && Object.keys(decoded.data).length>0){
+        decoded=decoded.data
       }
       await findRecordsSQL('company', [{ apiKey: decoded.apiKey }])
       .then(records => {
-        // console.log('company record found:', records)
+        //console.log('company record found:', records)
         decoded.companyId = records[0].id
         decoded.company = records[0].company
       })
-      .catch(err => console.error('Error finding records:', err));
+      .catch(err => console.error('Error finding company records:', err));
+      // console.log('decoded:',decoded)
       
+      if(decoded.access!=='dev'){
+        await findRecordsSQL('users', [{ username: decoded.userName, companyId: decoded.companyId }])
+          .then(records => {
+            //console.log('user records found:', records)
+            decoded.userId = records[0].id
+            // console.log('decoded with User:',decoded)
+          })
+          .catch(err => console.error('Error finding user records:', err));
+      }
       // Attach decoded data to request object
       req.user = decoded;
       // console.log('decoded: ', req.user)
