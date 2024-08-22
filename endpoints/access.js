@@ -106,7 +106,25 @@ module.exports = function (app, express) {
             console.log(`Token generated`)
             return res.status(200).json({ token,userReset,username,userAccess,filemakerId,companyName});
         }
-    });    
+    });   
+    
+    //req.user.userId
+    app.get('/verify', verifyToken, async (req, res) => {
+      try {
+        const records = await findRecordsSQL('users', [{ id: req.user.userId }]);
+        if (records.length > 0) {
+          const data = { fileMakerId: records[0].fileMakerId };
+          res.status(200).json(data);
+        } else {
+          console.error('No user records found');
+          res.status(404).json({ error: "User record not found" });
+        }
+      } catch (err) {
+        console.error('Error finding user records:', err);
+        res.status(500).json({ error: "Unable to get data" });
+      }
+    });
+    
 
     app.post('/github-webhook', express.json(), (req, res) => {
         const secret = process.env.GITHUB; // Replace with your GitHub webhook secret
