@@ -3,6 +3,7 @@ const { exec } = require('child_process');
 const { generateToken, generateApiKey,verifyPassword, validateGitHubRequest } = require('../auth/security');
 const { findRecordsSQL } = require('../SQLite/functions');
 const { sendSMS } = require('../twilio/sms');
+const { verifyToken } = require('../auth/security');
 
 const gitHubSecret = process.env.GITHUB; // Make sure this is defined in your .env file
 if (!gitHubSecret) {
