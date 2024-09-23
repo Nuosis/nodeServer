@@ -10,17 +10,16 @@ if (!twilioSID || !twilioAUTH || !twilioNUM || !devNUM) {
 const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 async function sendSMS(to, body) {
-    console.log("Send SMS calling");
-    // client.messages.create({
-    //     body: body,
-    //     to: to,  // Text this number
-    //     from: twilioNUM // From a valid Twilio number
-    // })
-    // .then((message) => console.log(message.sid))
-    // .catch((error) => console.error(error));
+    client.messages.create({
+        body: body,
+        to: to,  // Text this number
+        from: twilioNUM // From a valid Twilio number
+    })
+    .then((message) => console.log(message.sid))
+    .catch((error) => console.error(error));
 }
 
 
 module.exports = {
-    sendSMS,
+    sendSMS
 };

@@ -3,7 +3,6 @@ const { verifyToken } = require('../auth/security');
 
 module.exports = function (app) {
     // Hello World END POINT
-    // /
     app.get('/', (req, res) => {
         res.send('Hey good lookin\'');
     });

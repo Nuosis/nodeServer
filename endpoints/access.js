@@ -143,12 +143,12 @@ module.exports = function (app, express) {
         exec(`bash ${scriptPath}`, (error, stdout, stderr) => {
             if (error) {
                 console.error(`exec error: ${error}`);
-                sendSMS(process.env.DEV_NUMBER, `Update Failed: ${error.message}`)
+                // sendSMS(process.env.DEV_NUMBER, `Update Failed: ${error.message}`)
                 return res.status(500).send(`Script execution failed: ${error.message}`);
             }
             console.log(`stdout: ${stdout}`);
             console.error(`stderr: ${stderr}`);
-            sendSMS(process.env.DEV_NUMBER, `GitHub Webhook received and processed`)
+            // sendSMS(process.env.DEV_NUMBER, `GitHub Webhook received and processed`)
             res.status(200).send('Webhook received and processed');
         });
     });

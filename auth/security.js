@@ -14,11 +14,16 @@ if (!authPrivateKey) {
 
 // @returns {req.user{apiKey, userName, access}}
 async function verifyToken(req, res, next) {
-  console.log(`${new Date().toISOString()} /verifyTokenCalled`)
+  console.log("==========================================");
+  console.log(`${new Date().toISOString()} /verifyTokenCalled`);
+  console.log("==========================================");
   const path = (req.path)
   // Get auth header value
   const bearerHeader = req.headers['authorization'] || req.headers['Authorization'] ;
-  let decoded
+  let decoded;
+
+  console.log(bearerHeader);
+
   
   // Check if bearer is undefined
   if (typeof bearerHeader !== 'undefined') {

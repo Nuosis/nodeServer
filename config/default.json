@@ -1,0 +1,11 @@
+{
+    "allowedOrigins": [
+        "http://localhost:3000", 
+        "http://localhost:1234", 
+        "http://localhost:4040", 
+        "https://devtools.claritybusinesssolutions.ca", 
+        "https://selecthomecleaning.ca", 
+        "https://selecthomecleaning.app", 
+        "https://www.selecthomecleaning.app"
+    ]
+}

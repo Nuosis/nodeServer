@@ -12,15 +12,15 @@ const { readSSLFile } = require('./auth/security');
 const setupWebSocketServer = require('./webServices/websocket');
 
 // Require the endpoint modules
-const basicEndpoint = require('./endpoints/basic');
-const access = require('./endpoints/access');
+// const basicEndpoint = require('./endpoints/basic');
+// const access = require('./endpoints/access');
 const jsonConversions = require('./endpoints/jsonConversion');
 const fileManager = require('./endpoints/fileManagement');
 const prm = require('./endpoints/prm');
-const registration = require('./endpoints/registration');
+// const registration = require('./endpoints/registration');
 const logs = require('./endpoints/logging');
-const userManagement = require('./endpoints/userManagement');
-const clarityData = require('./endpoints/clarityData');
+// const userManagement = require('./endpoints/userManagement');
+// const clarityData = require('./endpoints/clarityData');
 const formManagement = require('./endpoints/formManagement');
 const { sendSMS } = require('./twilio/sms');
 const stripe = require('./endpoints/stripe');
@@ -60,10 +60,10 @@ try {
     throw new Error('Required environmental variable host is undefined');
   }
 
-  const httpsOptions = {
-    key: readSSLFile('/etc/letsencrypt/live/server.claritybusinesssolutions.ca/privkey.pem'),
-    cert: readSSLFile('/etc/letsencrypt/live/server.claritybusinesssolutions.ca/fullchain.pem')
-  };
+  // const httpsOptions = {
+  //   key: readSSLFile('/etc/letsencrypt/live/server.claritybusinesssolutions.ca/privkey.pem'),
+  //   cert: readSSLFile('/etc/letsencrypt/live/server.claritybusinesssolutions.ca/fullchain.pem')
+  // };
 
   let server;
 
@@ -87,21 +87,28 @@ try {
   // Setup WebSocket server
   setupWebSocketServer(server);
 
+  var normalizedPath = require("path").join(__dirname, "/app/routes");
+    require("fs").readdirSync(normalizedPath).forEach(function (file) {
+      var route = require("./app/routes/" + file);
+      if (route.configure != undefined)
+        route.configure(app);
+  });
+
 } catch (error) {
-  sendSMS(process.env.DEV_NUMBER, `Server start-up error: ${error.message}`);
+  // sendSMS(process.env.DEV_NUMBER, `Server start-up error: ${error.message}`);
   console.error(`Server start-up error: ${error.message}`);
 }
 
 //ENDPOINT FILES
-basicEndpoint(app);
-access(app, express);
+// basicEndpoint(app);
+// access(app, express);
 jsonConversions(app);
 fileManager(app);
 prm(app);
-registration(app);
+// registration(app);
 logs(app);
-userManagement(app);
-clarityData(app);
+// userManagement(app);
+// clarityData(app);
 formManagement(app);
 stripe(app);
 qbo(app);
