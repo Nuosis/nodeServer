@@ -23,6 +23,7 @@
     "node-mailjet": "^6.0.4",
     "node-quickbooks": "^2.0.45",
     "request": "^2.88.2",
+    "sequelize": "^6.37.3",
     "sqlite3": "^5.1.6",
     "stripe": "^15.7.0",
     "twilio": "^4.20.0",
