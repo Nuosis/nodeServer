@@ -1,5 +1,6 @@
 require('dotenv').config();
-const { createCompany, createUser } = require('./');
+
+const { createCompany, createUser } = require('../../users/functions');
 
 function userManagementController() {
     

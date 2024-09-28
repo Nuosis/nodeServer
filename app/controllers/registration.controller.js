@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { findRecordsSQL } = require('../SQLite/functions');
+const { findRecordsSQL } = require('../../SQLite/functions');
 
 function registrationController() {
     
