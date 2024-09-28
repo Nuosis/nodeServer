@@ -1,4 +1,4 @@
-var accessCtrl = require('./../controllers/accessController');
+var accessCtrl = require('../controllers/access.controller');
 
 module.exports = {
     configure: function (app) {

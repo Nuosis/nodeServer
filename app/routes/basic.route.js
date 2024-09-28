@@ -1,4 +1,4 @@
-var basicCtrl = require('./../controllers/basicController');
+var basicCtrl = require('../controllers/basic.controller');
 
 module.exports = {
     configure: function (app) {

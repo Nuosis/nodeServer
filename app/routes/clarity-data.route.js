@@ -1,4 +1,4 @@
-var clarityDataCtrl = require('./../controllers/clarityDataController');
+var clarityDataCtrl = require('../controllers/clarity-data.controller');
 
 module.exports = {
     configure: function (app) {

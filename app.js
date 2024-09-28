@@ -12,41 +12,21 @@ const { readSSLFile } = require("./auth/security");
 const setupWebSocketServer = require("./webServices/websocket");
 
 // Require the endpoint modules
-// const basicEndpoint = require('./endpoints/basic');
-// const access = require('./endpoints/access');
-const jsonConversions = require("./endpoints/jsonConversion");
-const fileManager = require("./endpoints/fileManagement");
 const prm = require("./endpoints/prm");
-// const registration = require('./endpoints/registration');
 const logs = require("./endpoints/logging");
-// const userManagement = require('./endpoints/userManagement');
-// const clarityData = require('./endpoints/clarityData');
-const formManagement = require("./endpoints/formManagement");
-const { sendSMS } = require("./twilio/sms");
 const stripe = require("./endpoints/stripe");
 const qbo = require("./endpoints/qbo");
 const sequelize = require("./app/db");
 
-// Importing Routes
-const fileManagementRoutes = require("./app/routes/file-management.route");
-const formManagementRoutes = require("./app/routes/form-management.route");
-const jsonConversionRoutes = require("./app/routes/json-conversion.route");
+const { sendSMS } = require("./app/integrations/twilio/twilio");
+
+console.log(config.allowedOrigins);
 
 const corsOptions = {
-  origin: [
-    "http://localhost:3000",
-    "http://localhost:1234",
-    "http://localhost:4040",
-    "https://devtools.claritybusinesssolutions.ca",
-    "https://selecthomecleaning.ca",
-    "https://selecthomecleaning.app",
-    "https://www.selecthomecleaning.app",
-  ], // or '*' for allowing any origin
+  origin: config.allowedOrigins, // or '*' for allowing any origin
   methods: ["GET", "POST"], // Allowed methods
   allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
 };
-
-console.log("v.1.0.0");
 
 // Sync the models with the database
 sequelize
@@ -76,12 +56,12 @@ try {
   }
 
   const httpsOptions = {
-    key: readSSLFile(
-      "/etc/letsencrypt/live/server.claritybusinesssolutions.ca/privkey.pem"
-    ),
-    cert: readSSLFile(
-      "/etc/letsencrypt/live/server.claritybusinesssolutions.ca/fullchain.pem"
-    ),
+    // key: readSSLFile(
+    //   "/etc/letsencrypt/live/server.claritybusinesssolutions.ca/privkey.pem"
+    // ),
+    // cert: readSSLFile(
+    //   "/etc/letsencrypt/live/server.claritybusinesssolutions.ca/fullchain.pem"
+    // ),
   };
 
   let server;

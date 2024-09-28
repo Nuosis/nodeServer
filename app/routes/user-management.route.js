@@ -1,4 +1,4 @@
-var userManagementCtrl = require('./../controllers/userManagementController');
+var userManagementCtrl = require('../controllers/user-management.controller');
 
 module.exports = {
     configure: function (app) {
