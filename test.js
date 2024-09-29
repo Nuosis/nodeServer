@@ -1,6 +1,5 @@
 require('dotenv').config();
-const twilio = require('twilio');
-const { sendSMS } = require('./twilio/sms');
+const { sendSMS } = require('./app/integrations/twilio');
 
 try{
     // sendSMS(+17786783674, `testing text to me`)

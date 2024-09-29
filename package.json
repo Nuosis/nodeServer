@@ -20,6 +20,7 @@
     "github-webhook-handler": "^1.0.0",
     "https": "^1.0.0",
     "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
     "node-mailjet": "^6.0.4",
     "node-quickbooks": "^2.0.45",
     "request": "^2.88.2",

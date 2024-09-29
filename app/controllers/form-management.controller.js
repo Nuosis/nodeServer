@@ -1,27 +1,28 @@
 const { HttpStatusCode } = require("axios");
 const { tokenize, deTokenize } = require("../../auth/security");
 
-exports.tokenize = async (req, res) => {
-  try {
-    console.log(`${new Date().toISOString()} /tokenize called`);
-    data = req.body;
-    console.log(data);
-    const token = tokenize(data); // Implement this function to generate a unique token
-    res.send({ token }); // Send back the token to the client
-  } catch (error) {
-    res.status(HttpStatusCode.InternalServerError).json({ error });
+function formManagementController() {
+    
+  this.tokenize = function (req, res) {
+    try {
+      data = req.body;
+      const token = tokenize(data); // Implement this function to generate a unique token
+      res.send({ token });
+    } catch (error) {
+      res.status(HttpStatusCode.InternalServerError).json({ error: error.message });
+    }
   }
-};
 
-exports.getTokenData = async (req, res) => {
-  try {
-    console.log(`${new Date().toISOString()} /deTokenize called`);
-    const { token } = req.query;
-    const data = deTokenize(token);
-    res.send(data || {});
-  } catch (error) {
-    res
-      .status(HttpStatusCode.InternalServerError)
-      .json({ error: error.message });
+  this.getTokenData = function (req, res) {
+    try {
+      const { token } = req.query;
+      const data = deTokenize(token);
+      res.send(data || {});
+    } catch (error) {
+      res.status(HttpStatusCode.InternalServerError).json({ error: error.message });
+    }
   }
-};
+
+}
+
+module.exports = new formManagementController();

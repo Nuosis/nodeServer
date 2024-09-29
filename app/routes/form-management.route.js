@@ -1,9 +1,18 @@
-const express = require("express");
-const formManagementController = require("../controllers/form-management.controller");
+const formManagementCtrl = require("../controllers/form-management.controller");
 
-const router = express.Router();
-
-router.post("/tokenize", formManagementController.tokenize);
-router.post("/getTokenData", formManagementController.getTokenData);
-
-module.exports = router;
+module.exports = {
+    configure: function (app) {
+        /**
+         * Tokeize
+         */
+        app.route('/tokenize').post(function (req, res) {
+            formManagementCtrl.tokenize(req, res);
+        });
+        /**
+         * Get token data
+         */
+        app.route('/getTokenData').get(function (req, res) {
+            formManagementCtrl.getTokenData(req, res);
+        });
+    }
+}
