@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const { createCompany, createUser } = require('../../users/functions');
-const { sanitizeInput, generateToken, hashPassword, deTokenize } = require('../../auth/security');
+const { sanitizeInput, generateToken, hashPassword, deTokenize } = require('../auth/security');
 const { findRecordsSQL, modifyAllSQL } = require('../../SQLite/functions');
 
 function userManagementController() {

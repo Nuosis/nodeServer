@@ -1,8 +1,8 @@
 const stripe = require('stripe');
-const {findRecord} = require('../dataAPI/functions');
-const {deTokenize, tokenize} = require('../auth/security');
-const {findRecordsSQL} = require('../SQLite/functions');
-const access = require('../dataAPI/access');
+const { findRecord } = require('../../../dataAPI/functions');
+const { deTokenize,  } = require('../../auth/security');
+const { findRecordsSQL } = require('../../../SQLite/functions');
+const access = require('../../../dataAPI/access');
 
 async function routeStripeRequest(apiKey, method, params) {
     // Extract company idFilemaker using the apiKey

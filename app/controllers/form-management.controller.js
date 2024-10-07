@@ -1,5 +1,5 @@
 const { HttpStatusCode } = require("axios");
-const { tokenize, deTokenize } = require("../../auth/security");
+const { tokenize, deTokenize } = require("../auth/security");
 
 function formManagementController() {
     

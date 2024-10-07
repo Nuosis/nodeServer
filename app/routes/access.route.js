@@ -1,4 +1,5 @@
 var accessCtrl = require('../controllers/access.controller');
+const { verifyToken } = require('../auth/security');
 
 module.exports = {
     configure: function (app) {
@@ -11,7 +12,7 @@ module.exports = {
         /**
          * Verify user
          */
-        app.route('/verify').get(function (req, res) {
+        app.route('/verify').get(verifyToken, function (req, res) {
             accessCtrl.verifyUser(req, res);
         });
         /**

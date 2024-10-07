@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const sqlite3 = require('sqlite3').verbose();
-const { createRecordSQL, findRecordsSQL } = require('../SQLite/functions');
+const { createRecordSQL, findRecordsSQL } = require('../../SQLite/functions');
 
 const authPrivateKey = process.env.SECRETKEY; // Make sure this is defined in your .env file
 if (!authPrivateKey) {

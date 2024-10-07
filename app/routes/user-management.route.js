@@ -1,5 +1,5 @@
 var userManagementCtrl = require('../controllers/user-management.controller');
-const { verifyToken } = require('../../auth/security');
+const { verifyToken } = require('../auth/security');
 
 module.exports = {
     configure: function (app) {

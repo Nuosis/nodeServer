@@ -1,7 +1,7 @@
 const validator = require("validator");
 const { HttpStatusCode } = require("axios");
 const { execFile } = require("child_process");
-const { sanitizeInput } = require("../../auth/security");
+const { sanitizeInput } = require("../auth/security");
 
 exports.convertXlsxToJson = async (req, res) => {
   try {

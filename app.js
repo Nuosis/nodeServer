@@ -7,7 +7,7 @@ const cors = require("cors");
 var morgan = require('morgan');
 const config = require("./config/default.json");
 const sequelize = require("./app/db");
-const { readSSLFile } = require("./auth/security");
+const { readSSLFile } = require("./app/auth/security");
 const { sendSMS } = require("./app/integrations/twilio/twilio");
 const setupWebSocketServer = require("./webServices/websocket");
 

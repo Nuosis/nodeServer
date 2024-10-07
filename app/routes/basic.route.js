@@ -11,7 +11,7 @@ module.exports = {
         /**
          * Verify token
          */
-        app.route('/access').get(function (req, res) {
+        app.route('/access').get(verifyToken, function (req, res) {
             basicCtrl.verifyToken(req, res);
         });
     }
