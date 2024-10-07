@@ -1,12 +1,14 @@
-const express = require("express");
 const jsonConversionCtrl = require("../controllers/json-conversion.controller");
 
-const router = express.Router();
+module.exports = {
+  configure: function (app) {
+    /**
+     * XLS to JSON Converter
+     */
+    app.route('/convert-xlsx-to-json').post(function (req, res) {
+      jsonConversionCtrl.convertXlsxToJson(req, res);
+    });
+  }
+}
 
-// XLSX to JSON SERVICE
-router.post(
-  "/convert-xlsx-to-json",
-  jsonConversionCtrl.convertXlsxToJson
-);
 
-module.exports = router;

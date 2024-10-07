@@ -1,6 +1,8 @@
 require('dotenv').config();
 
 const { createCompany, createUser } = require('../../users/functions');
+const { sanitizeInput, generateToken, hashPassword, deTokenize } = require('../../auth/security');
+const { findRecordsSQL, modifyAllSQL } = require('../../SQLite/functions');
 
 function userManagementController() {
     
@@ -78,7 +80,6 @@ function userManagementController() {
         const { apiKey, userName } = req.user;
         const userAccess = req.user.access;
         const { newUserName, newPassword, accessLevel } = req.body;
-        console.log({apiKey,userName,userAccess,newUserName,newPassword,accessLevel})
         if (!newUserName || !newPassword) {
             return res.status(400).json({ message: 'userName, password for new user are required' });
         }
@@ -87,25 +88,19 @@ function userManagementController() {
             return res.status(400).json({ message: 'userName or password too long' });
         }
         if (userAccess === 'dev') {
-            console.log('dev auth initiated') 
-        
             //CREATE
             const newUserAccess = accessLevel || 'standard';
-            console.log('access: ', newUserAccess);
             try {
-                    // Call the createUser function
-                    const reset = false;
-                    const newUser = await createUser(apiKey, newUserName, newPassword, newUserAccess, reset);
-                    res.status(201).json({ 
-                        message: 'User created successfully.',
-                    });
+                // Call the createUser function
+                const reset = false;
+                const newUser = await createUser(apiKey, newUserName, newPassword, newUserAccess, reset);
+                res.status(201).json({ 
+                    message: 'User created successfully.',
+                });
             } catch (error) {
-                    console.error('Creation error:', error.message);
-                    res.status(500).json({ message: error.message });
+                res.status(500).json({ message: error.message });
             };
         } else {       
-            console.log('user auth initiated')
-
             //creators access level
             if (userAccess !== 'admin' && userAccess !== 'dev') {
                 console.error('access error: Insufficient Access Level', userAccess);
@@ -121,7 +116,6 @@ function userManagementController() {
         
             //CREATE
             const newUserAccess = accessLevel || 'standard';
-            console.log('accessLevel: ', newUserAccess);
             try {
                     // Call the createUser function
                     const newUser = await createUser(apiKey, newUserName, newPassword, newUserAccess);
@@ -138,9 +132,7 @@ function userManagementController() {
 
     this.updateUser = async function (req, res) {
         const { userId, access } = req.user;
-        // console.log('requestUser: ',req.user)
         const { newPassword, newAccessLevel, newReset, newFileMakerID, newVerified, userToken } = req.body;
-        // console.log('requestBody: ',req.body)
         let companyId = "";
         let userName = "";
         try {
@@ -157,11 +149,9 @@ function userManagementController() {
 
         // Basic validation
         if (!newPassword && !newAccessLevel && !newReset && !newFileMakerID && !newVerified) {
-            console.log('empty update variables: ');
             return res.status(400).json({ message: 'no updated values provided' });
         }
         if (!companyId || !userName ) {
-            console.log('required user variables unset');
             return res.status(400).json({ message: 'no updated values provided' });
         }
 
@@ -169,7 +159,6 @@ function userManagementController() {
         try {
             // Confirm the user making the request has sufficient privileges
             if ((newPassword || newAccessLevel) && (userId !== 'dev' || access !== 'admin')) {
-                console.log('access denied!');
                 console.error("access denied: access level",access,'devUser',userId)
                 return res.status(403).json({ message: 'Insufficient privileges' });
             }
@@ -194,12 +183,9 @@ function userManagementController() {
             if (newVerified) {
                 modifications.verified = true;
             }
-            console.log({modifications});
-
 
             // Update user details in the database
             await modifyAllSQL('users', [{ username: userName, companyId }], modifications);
-            console.log('User updated successfully.');
             res.status(200).json({ message: 'User updated successfully' });
         } catch (error) {
             console.error('Error updating user:', error);

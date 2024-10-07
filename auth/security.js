@@ -14,24 +14,15 @@ if (!authPrivateKey) {
 
 // @returns {req.user{apiKey, userName, access}}
 async function verifyToken(req, res, next) {
-  console.log("==========================================");
-  console.log(`${new Date().toISOString()} /verifyTokenCalled`);
-  console.log("==========================================");
-  const path = (req.path)
+  const path = (req.path);
   // Get auth header value
   const bearerHeader = req.headers['authorization'] || req.headers['Authorization'] ;
   let decoded;
 
-  console.log(bearerHeader);
-
-  
-  // Check if bearer is undefined
   if (typeof bearerHeader !== 'undefined') {
     // Split at the space to get token
     const bearer = bearerHeader.split(' ');
-    // Get token from array
     const bearerToken = bearer[1];
-    // console.log('token:',bearerToken)
     
     try {
       // Verify the token
@@ -45,31 +36,30 @@ async function verifyToken(req, res, next) {
           }
         });
       });
-      //console.log('decoded:',decoded)
       if(decoded.data && Object.keys(decoded.data).length>0){
         decoded=decoded.data
       }
-      await findRecordsSQL('company', [{ apiKey: decoded.apiKey }])
-      .then(records => {
-        //console.log('company record found:', records)
-        decoded.companyId = records[0].id
-        decoded.company = records[0].company
-      })
-      .catch(err => console.error('Error finding company records:', err));
-      // console.log('decoded:',decoded)
-      
-      if(decoded.access!=='dev'){
-        await findRecordsSQL('users', [{ username: decoded.userName, companyId: decoded.companyId }])
+      if (decoded?.apiKey) {
+        await findRecordsSQL('company', [{ apiKey: decoded.apiKey }])
           .then(records => {
-            //console.log('user records found:', records)
-            decoded.userId = records[0].id
-            // console.log('decoded with User:',decoded)
+            decoded.companyId = records[0].id
+            decoded.company = records[0].company
           })
-          .catch(err => console.error('Error finding user records:', err));
+          .catch(err => console.error('Error finding company records:', err));
       }
+      
+      if(decoded?.access !== 'dev'){
+        if (decoded?.userName && decoded?.companyId) {
+          await findRecordsSQL('users', [{ username: decoded.userName, companyId: decoded.companyId }])
+            .then(records => {
+              decoded.userId = records[0].id
+            })
+            .catch(err => console.error('Error finding user records:', err));
+        }
+      }
+
       // Attach decoded data to request object
       req.user = decoded;
-      // console.log('decoded: ', req.user)
 
       const tableName = 'userAccess';
       const recordID = uuidv4();
@@ -79,21 +69,18 @@ async function verifyToken(req, res, next) {
       // For the timestamp fields
       const sqliteTimestampFormat = currentDate.toISOString().replace('T', ' ').replace(/\.\d+Z$/, ''); // Formats to 'YYYY-MM-DD HH:MM:SS'
       const newAccess = {
-          id: recordID,
-          apiKey: decoded.apiKey,
-          userId: decoded.userName === 'Dev' ? 'dev' : decoded.userId,
-          userName: decoded.userName,
-          endPoint: path,
-          date: sqliteDateFormat,
-          created: sqliteTimestampFormat,
-          modified: sqliteTimestampFormat
+        id: recordID,
+        apiKey: decoded.apiKey,
+        userId: decoded.userName === 'Dev' ? 'dev' : decoded.userId,
+        userName: decoded.userName,
+        endPoint: path,
+        date: sqliteDateFormat,
+        created: sqliteTimestampFormat,
+        modified: sqliteTimestampFormat
       };
 
-
-      // console.log('access record created')
       createRecordSQL(tableName, newAccess)
         .then(lastID => {
-            //console.log(`New access record added`);
         })
         .catch(error => {
           console.log(`New access record error (see error out)`);

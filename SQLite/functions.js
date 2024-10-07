@@ -10,9 +10,7 @@ const path = require('path');
  */
 function createRecordSQL(table, fieldValues) {
     return new Promise((resolve, reject) => {
-        // console.log('createRecordSQL');
         const dbPath = path.resolve(__dirname, '../db.sqlite');
-        //console.log(dbPath)
         const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
             if (err) {
                 console.error('Error opening database', err);
@@ -24,7 +22,6 @@ function createRecordSQL(table, fieldValues) {
             const fields = Object.keys(fieldValues);
             const values = Object.values(fieldValues);
             const placeholders = fields.map(() => '?').join(', ');
-
             const insertSQL = `INSERT INTO ${table} (${fields.join(', ')}) VALUES (${placeholders})`;
 
             db.run(insertSQL, values, function(err) {
@@ -37,7 +34,6 @@ function createRecordSQL(table, fieldValues) {
                     reject(err);
                     return;
                 }
-                // console.log(`A record has been inserted with rowid ${this.lastID}`);
                 resolve(this.lastID);
 
                 db.close((err) => {
@@ -46,7 +42,6 @@ function createRecordSQL(table, fieldValues) {
                         reject(err);
                         return;
                     }
-                    //console.log('Closed the database connection.');
                 });
             });
         });

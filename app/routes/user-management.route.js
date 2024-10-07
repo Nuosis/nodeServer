@@ -1,4 +1,5 @@
 var userManagementCtrl = require('../controllers/user-management.controller');
+const { verifyToken } = require('../../auth/security');
 
 module.exports = {
     configure: function (app) {
@@ -11,25 +12,25 @@ module.exports = {
         /**
          * Get company users
          */
-        app.route('/companyUsers').get(function (req, res) {
+        app.route('/companyUsers').get(verifyToken, function (req, res) {
             userManagementCtrl.companyUsers(req, res);
         });
         /**
          * Create user
          */
-        app.route('/createUser').post(function (req, res) {
+        app.route('/createUser').post(verifyToken, function (req, res) {
             userManagementCtrl.createUser(req, res);
         });
         /**
          * Update user
          */
-        app.route('/updateUser').post(function (req, res) {
+        app.route('/updateUser').post(verifyToken, function (req, res) {
             userManagementCtrl.updateUser(req, res);
         });
         /**
          * User token
          */
-        app.route('/user_token').post(function (req, res) {
+        app.route('/user_token').post(verifyToken, function (req, res) {
             userManagementCtrl.userToken(req, res);
         });
     }
