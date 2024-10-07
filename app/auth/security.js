@@ -170,12 +170,11 @@ function generateToken(apiKey, userName, access) {
 // Function to generate a token from an apiKey
 function tokenize(data) {
   try {
-      // Sign
-      const token = jwt.sign({ data }, authPrivateKey, { algorithm: 'HS256' });
-      return token;
+    const token = jwt.sign({ data }, authPrivateKey, { algorithm: 'HS256' });
+    return token;
   } catch (error) {
-      console.error("Error generating token:", error);
-      throw new Error("Token generation failed");
+    console.error("Error generating token:", error);
+    throw new Error("Token generation failed");
   }
 }
 
