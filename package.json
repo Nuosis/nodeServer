@@ -25,6 +25,7 @@
     "node-quickbooks": "^2.0.45",
     "request": "^2.88.2",
     "sequelize": "^6.37.3",
+    "sequelize-cli": "^6.6.2",
     "sqlite3": "^5.1.6",
     "stripe": "^15.7.0",
     "twilio": "^4.20.0",

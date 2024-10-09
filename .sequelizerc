@@ -1,0 +1,7 @@
+const path = require("path");
+
+module.exports = {
+  config: path.resolve("./app/db/config.json"), // Point to your custom db.js file
+  "models-path": path.resolve("./app/models"), // Models folder path
+  "migrations-path": path.resolve("./app/migrations"), // Migrations folder path
+};
