@@ -1,9 +1,9 @@
 const QuickBooks = require('node-quickbooks');
+const { parse } = require('dotenv');
+const axios = require('axios');
 const { runScript, findRecord } = require('../dataAPI/functions');
 const {findRecordsSQL} = require('../SQLite/functions');
 const access = require('../dataAPI/access');
-const axios = require('axios');
-const { parse } = require('dotenv');
 
 
 async function configQBO(apiKey) {

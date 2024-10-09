@@ -1,5 +1,4 @@
 require("dotenv").config();
-require("dotenv").config();
 const https = require("https");
 const fs = require("fs");
 const express = require("express");
@@ -86,4 +85,5 @@ try {
 } catch (error) {
   sendSMS(process.env.DEV_NUMBER, `Server start-up error: ${error.message}`);
   console.error(`Server start-up error: ${error.message}`);
+  console.error(error.stack);  // This will print detailed error information with stack trace
 }

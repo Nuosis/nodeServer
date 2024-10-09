@@ -10,6 +10,12 @@ module.exports = {
             accessCtrl.login(req, res);
         });
         /**
+         * Refresh Token
+         */
+        app.route('/refresh-token').post(function (req, res) {
+            accessCtrl.refreshToken(req, res);
+        });
+        /**
          * Verify user
          */
         app.route('/verify').get(verifyToken, function (req, res) {

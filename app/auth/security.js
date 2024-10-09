@@ -108,10 +108,10 @@ function sanitizeInput(input) {
 // Function to read and report SSL files
 function readSSLFile(filePath) {
   try {
-      return fs.readFileSync(filePath);
+    return fs.readFileSync(filePath);
   } catch (err) {
-      console.error(`Failed to load SSL file at ${filePath}: ${err.message}`);
-      return null; // Return null instead of throwing an error
+    console.error(`Failed to load SSL file at ${filePath}: ${err.message}`);
+    return null; // Return null instead of throwing an error
   }
 }
 
@@ -123,7 +123,6 @@ async function hashPassword(password) {
 
 // Function to verify a password against a hashed password
 async function verifyPassword(password, hashedPassword) {
-  console.log(`compairing passwords`)
   return bcrypt.compare(password, hashedPassword);
 }
 
@@ -159,13 +158,31 @@ function generateToken(apiKey, userName, access) {
       const user = userName || '';
       const accessLevel = access || 'standard';
       // Sign the API key
-      const token = jwt.sign({ apiKey: key, userName: user, access: accessLevel }, authPrivateKey, { algorithm: 'HS256' });
+      const token = jwt.sign({ apiKey: key, userName: user, access: accessLevel }, authPrivateKey, { algorithm: 'HS256', expiresIn: '15m' });
       return token;
   } catch (error) {
       console.error("Error generating token:", error);
       throw new Error("Token generation failed");
   }
 }
+
+function generateRefreshToken(apiKey, userName, access) {
+  try {
+      const key = apiKey || '';
+      const user = userName || '';
+      const accessLevel = access || 'standard';
+      const refreshToken = jwt.sign(
+        { apiKey: key, userName: user, access: accessLevel },
+        process.env.REFRESH_SECRET,
+        { algorithm: 'HS256', expiresIn: '7d' }
+      );
+      return refreshToken;
+  } catch (error) {
+      console.error("Error generating refresh token:", error);
+      throw new Error("Refresh token generation failed");
+  }
+}
+
 
 // Function to generate a token from an apiKey
 function tokenize(data) {
@@ -213,6 +230,7 @@ module.exports = {
   generateUUID: uuidv4, 
   generateApiKey, 
   generateToken,
+  generateRefreshToken,
   decodeToken,
   hashPassword,
   verifyPassword,

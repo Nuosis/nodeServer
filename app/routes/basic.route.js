@@ -1,4 +1,5 @@
 var basicCtrl = require('../controllers/basic.controller');
+const { verifyToken } = require('../auth/security');
 
 module.exports = {
     configure: function (app) {

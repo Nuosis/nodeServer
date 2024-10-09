@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { exec } = require('child_process');
-const { generateToken, generateApiKey,verifyPassword, validateGitHubRequest } = require('../auth/security');
+const { generateToken, generateApiKey,verifyPassword, validateGitHubRequest, generateRefreshToken, } = require('../auth/security');
 const { findRecordsSQL } = require('../../SQLite/functions');
 const { sendSMS } = require('../integrations/twilio/twilio');
 
@@ -70,7 +70,6 @@ function accessController() {
             const userRecords = await findRecordsSQL('users', userQuery);
 
             if (userRecords.length === 0) {
-                console.log(`no user found for user ${username}`)
                 return res.status(404).json({ message: 'User not found' });
             }
 
@@ -87,7 +86,36 @@ function accessController() {
             const filemakerId = userRecord.filemakerId;
 
             const token = generateToken(username,userAccess,filemakerId,companyName)
+            const refreshToken = generateRefreshToken(username,userAccess,filemakerId,companyName)
+
+            res.cookie('jwt', token, { httpOnly: true, maxAge: 15 * 60 * 1000 });
+            res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000});
+
             return res.status(200).json({ token,userReset,username,userAccess,filemakerId,companyName});
+        }
+    }
+
+    this.refreshToken = async function (req, res) {
+        const refreshToken = req.cookies.refreshToken;
+    
+        if (!refreshToken) {
+            return res.status(401).json({ message: 'Refresh token not provided' });
+        }
+    
+        try {
+            jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, user) => {
+                if (err) {
+                    return res.status(403).json({ message: 'Invalid refresh token' });
+                }    
+                const newAccessToken = generateToken(user.userName, user.access, user.filemakerId, user.companyName);
+    
+                res.cookie('jwt', newAccessToken, { httpOnly: true, maxAge: 15 * 60 * 1000, secure: process.env.NODE_ENV === 'production', sameSite: 'Strict' });
+
+                return res.status(200).json({ token: newAccessToken });
+            });
+        } catch (error) {
+            console.error('Error refreshing token:', error);
+            return res.status(500).json({ message: 'Internal server error' });
         }
     }
 
