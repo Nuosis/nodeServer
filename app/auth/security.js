@@ -28,7 +28,10 @@ async function verifyToken(req, res, next) {
       // Verify the token
       decoded = await new Promise((resolve, reject) => {
         jwt.verify(bearerToken, authPrivateKey, (err, authData) => {
-          if (err) {
+          if (err && err.name === 'TokenExpiredError') {
+            // Token has expired according to JWT, but we will check database expiration
+            resolve(null);  // Resolve to null, meaning the token has expired
+          } else if (err) {
             console.error('JWT Verification Error:', err);
             reject(err);
           } else {
@@ -43,7 +46,6 @@ async function verifyToken(req, res, next) {
         return res.status(401).json({ message: 'Invalid token' });
       }
 
-      // if the token has expired
       if (Date.now() < tokenRecord.expiryTime) {
         // Extend token expiration
         const newToken = generateToken(decoded.userId, decoded.apiKey, decoded.userName, decoded.access);

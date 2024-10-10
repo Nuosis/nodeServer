@@ -1,5 +1,5 @@
 var accessCtrl = require('../controllers/access.controller');
-const { verifyToken } = require('../auth/security');
+const { verifyToken, refreshToken } = require('../auth/security');
 
 module.exports = {
     configure: function (app) {

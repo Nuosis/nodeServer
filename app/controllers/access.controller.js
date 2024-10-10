@@ -152,6 +152,56 @@ function accessController() {
             res.status(200).send('Webhook received and processed');
         });
     }
+
+    this.refereshToken = async function (req, res) {
+        const { refreshToken } = req.body;
+
+        // Validate refresh token input
+        if (!refreshToken) {
+            return res.status(400).json({ message: 'Refresh token required' });
+        }
+
+        try {
+            // Verify the refresh token
+            const decoded = await new Promise((resolve, reject) => {
+            jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, authData) => {
+                if (err) {
+                console.error('Refresh Token Verification Error:', err);
+                reject(err);  // Token expired or invalid
+                } else {
+                resolve(authData);  // Token is valid, proceed with decoded data
+                }
+            });
+            });
+
+            // Find the refresh token in the database
+            const tokenRecord = await findRecordsSQL('token', [{ token: refreshToken, tokenType: 'refresh' }]);
+
+            if (!tokenRecord || Date.now() > tokenRecord.expiryTime) {
+                // Refresh token is invalid or expired in the database
+                return res.status(401).json({ message: 'Refresh token expired, please log in again' });
+            }
+
+            // Generate a new access token
+            const newAccessToken = generateToken(decoded.userId, decoded.apiKey, decoded.userName, decoded.access)
+            const newAccessTokenExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+            // Update access token in the database
+            await createRecordSQL('token', {
+            userId: decoded.userId,
+            token: newAccessToken,
+            expiryTime: newAccessTokenExpiry,
+            tokenType: 'access',
+            });
+
+            // Return the new access token
+            res.status(200).json({ accessToken: newAccessToken });
+
+        } catch (err) {
+            return res.status(403).json({ message: 'Invalid or expired refresh token' });
+        }
+
+    }
 }
 
 module.exports = new accessController();
