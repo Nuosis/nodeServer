@@ -8,6 +8,7 @@ const {
   deTokenize,
 } = require("../auth/security");
 const { findRecordsSQL, modifyAllSQL } = require("../../SQLite/functions");
+const jwt = require('jsonwebtoken');
 
 function userManagementController() {
   this.createCompany = async function (req, res) {
@@ -87,8 +88,8 @@ function userManagementController() {
   };
 
   this.createUser = async function (req, res) {
-    const { apiKey, userName } = req.user;
-    const userAccess = req.user.access;
+    let { apiKey = '', userName = '' } = req?.user || {};
+    const userAccess = req?.user?.access;
     const { newUserName, newPassword, accessLevel } = req.body;
     if (!newUserName || !newPassword) {
       return res
@@ -99,6 +100,11 @@ function userManagementController() {
     if (newUserName.length > 120 || newPassword.length > 120) {
       return res.status(400).json({ message: "userName or password too long" });
     }
+
+    if (!apiKey){
+      apiKey = req.body.apiKey;
+    }
+    
     if (userAccess === "dev") {
       //CREATE
       const newUserAccess = accessLevel || "standard";
@@ -120,12 +126,12 @@ function userManagementController() {
       }
     } else {
       //creators access level
-      if (userAccess !== "admin" && userAccess !== "dev") {
-        console.error("access error: Insufficient Access Level", userAccess);
-        return res
-          .status(400)
-          .json({ message: "Insufficient credentials to create user" });
-      }
+      // if (userAccess !== "admin" && userAccess !== "dev") {
+      //   console.error("access error: Insufficient Access Level", userAccess);
+      //   return res
+      //     .status(400)
+      //     .json({ message: "Insufficient credentials to create user" });
+      // }
 
       //creators intented access level for new useraccess level
       if (accessLevel === "dev") {
@@ -145,14 +151,14 @@ function userManagementController() {
           newPassword,
           newUserAccess
         );
-        const newUserToken = generateToken(
-          apiKey,
-          newUser.username,
-          newUserAccess
-        );
+        // const newUserToken = generateToken(
+        //   apiKey,
+        //   newUser.username,
+        //   newUserAccess
+        // );
         res
           .status(201)
-          .json({ username: newUser.username, token: newUserToken });
+          .json({ message: "User created successfully" });
       } catch (error) {
         console.error("Creation error:", error.message);
         res.status(500).json({ message: error.message });

@@ -36,6 +36,32 @@ async function verifyToken(req, res, next) {
           }
         });
       });
+
+      const tokenRecord = await findRecordsSQL('token', [{ token: bearerToken, tokenType: 'access' }]);
+
+      if (!tokenRecord) {
+        return res.status(401).json({ message: 'Invalid token' });
+      }
+
+      // if the token has expired
+      if (Date.now() < tokenRecord.expiryTime) {
+        // Extend token expiration
+        const newToken = generateToken(decoded.userId, decoded.apiKey, decoded.userName, decoded.access);
+        const newExpiryTime = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+        await Token.update(
+          { token: newToken, expiryTime: newExpiryTime },
+          { where: { id: tokenRecord.id } }
+        );
+
+        res.setHeader('Authorization', `Bearer ${newToken}`);
+        req.user = decoded;
+
+      } else {
+        // Token has expired due to inactivity
+        return res.status(401).json({ message: 'Session expired due to inactivity' });
+      }
+
       if(decoded.data && Object.keys(decoded.data).length>0){
         decoded=decoded.data
       }
@@ -152,13 +178,14 @@ function decodeToken(token) {
 }
 
 // Function to generate a token from an apiKey
-function generateToken(apiKey, userName, access) {
+function generateToken(userId, apiKey, userName, access) {
   try {
       const key = apiKey || '';
       const user = userName || '';
       const accessLevel = access || 'standard';
+      const user_id = userId;
       // Sign the API key
-      const token = jwt.sign({ apiKey: key, userName: user, access: accessLevel }, authPrivateKey, { algorithm: 'HS256', expiresIn: '15m' });
+      const token = jwt.sign({ apiKey: key, userId: user_id, userName: user, access: accessLevel }, authPrivateKey, { algorithm: 'HS256', expiresIn: '15m' });
       return token;
   } catch (error) {
       console.error("Error generating token:", error);
@@ -166,13 +193,14 @@ function generateToken(apiKey, userName, access) {
   }
 }
 
-function generateRefreshToken(apiKey, userName, access) {
+function generateRefreshToken(userId, apiKey, userName, access) {
   try {
       const key = apiKey || '';
       const user = userName || '';
       const accessLevel = access || 'standard';
+      const user_id = userId;
       const refreshToken = jwt.sign(
-        { apiKey: key, userName: user, access: accessLevel },
+        { apiKey: key, userName: user, userId: user_id, access: accessLevel },
         process.env.REFRESH_SECRET,
         { algorithm: 'HS256', expiresIn: '7d' }
       );

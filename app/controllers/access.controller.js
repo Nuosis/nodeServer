@@ -1,8 +1,9 @@
 require('dotenv').config();
 const { exec } = require('child_process');
 const { generateToken, generateApiKey,verifyPassword, validateGitHubRequest, generateRefreshToken, } = require('../auth/security');
-const { findRecordsSQL } = require('../../SQLite/functions');
+const { findRecordsSQL, createRecordSQL } = require('../../SQLite/functions');
 const { sendSMS } = require('../integrations/twilio/twilio');
+const { Token } = require('../models/Token');
 
 function accessController() {
     
@@ -84,38 +85,29 @@ function accessController() {
             const userAccess = userRecord.access;
             const userReset = userRecord.resetPassword;
             const filemakerId = userRecord.filemakerId;
+            const userId = userRecord.id;
 
-            const token = generateToken(username,userAccess,filemakerId,companyName)
-            const refreshToken = generateRefreshToken(username,userAccess,filemakerId,companyName)
+            const token = generateToken(userId,username,userAccess,filemakerId,companyName)
+            const refreshToken = generateRefreshToken(userId,username,userAccess,filemakerId,companyName);
 
-            res.cookie('jwt', token, { httpOnly: true, maxAge: 15 * 60 * 1000 });
-            res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000});
+            const accessTokenExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes
+            const refreshTokenExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
 
-            return res.status(200).json({ token,userReset,username,userAccess,filemakerId,companyName});
-        }
-    }
-
-    this.refreshToken = async function (req, res) {
-        const refreshToken = req.cookies.refreshToken;
-    
-        if (!refreshToken) {
-            return res.status(401).json({ message: 'Refresh token not provided' });
-        }
-    
-        try {
-            jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, user) => {
-                if (err) {
-                    return res.status(403).json({ message: 'Invalid refresh token' });
-                }    
-                const newAccessToken = generateToken(user.userName, user.access, user.filemakerId, user.companyName);
-    
-                res.cookie('jwt', newAccessToken, { httpOnly: true, maxAge: 15 * 60 * 1000, secure: process.env.NODE_ENV === 'production', sameSite: 'Strict' });
-
-                return res.status(200).json({ token: newAccessToken });
+            await createRecordSQL('token', {
+                userId: userId,
+                token: token,
+                expiryTime: accessTokenExpiry,
+                tokenType: 'access',
             });
-        } catch (error) {
-            console.error('Error refreshing token:', error);
-            return res.status(500).json({ message: 'Internal server error' });
+
+            await createRecordSQL('token', {
+                userId: userId,
+                token: refreshToken,
+                expiryTime: refreshTokenExpiry,
+                tokenType: 'refresh',
+            });       
+
+            return res.status(200).json({ token,refreshToken,userReset,username,userAccess,filemakerId,companyName});
         }
     }
 

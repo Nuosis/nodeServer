@@ -18,7 +18,7 @@ module.exports = {
     /**
      * Create user
      */
-    app.route("/createUser").post(verifyToken, function (req, res) {
+    app.route("/createUser").post( function (req, res) {
       userManagementCtrl.createUser(req, res);
     });
     /**
