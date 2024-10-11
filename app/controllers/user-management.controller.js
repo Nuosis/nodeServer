@@ -1,5 +1,8 @@
+// External Imports
 require("dotenv").config();
+const { v4: uuidv4 } = require("uuid");
 
+// Internal Imports
 const { createCompany, createUser } = require("../../users/functions");
 const {
   sanitizeInput,
@@ -8,7 +11,9 @@ const {
   deTokenize,
 } = require("../auth/security");
 const { findRecordsSQL, modifyAllSQL } = require("../../SQLite/functions");
-const jwt = require('jsonwebtoken');
+const User = require("../models/User");
+const Token = require("../models/Token");
+const { sendResetPasswordEmail } = require("../utils/email-templates");
 
 function userManagementController() {
   this.createCompany = async function (req, res) {
@@ -88,7 +93,7 @@ function userManagementController() {
   };
 
   this.createUser = async function (req, res) {
-    let { apiKey = '', userName = '' } = req?.user || {};
+    let { apiKey = "", userName = "" } = req?.user || {};
     const userAccess = req?.user?.access;
     const { newUserName, newPassword, accessLevel } = req.body;
     if (!newUserName || !newPassword) {
@@ -101,10 +106,10 @@ function userManagementController() {
       return res.status(400).json({ message: "userName or password too long" });
     }
 
-    if (!apiKey){
+    if (!apiKey) {
       apiKey = req.body.apiKey;
     }
-    
+
     if (userAccess === "dev") {
       //CREATE
       const newUserAccess = accessLevel || "standard";
@@ -156,9 +161,7 @@ function userManagementController() {
         //   newUser.username,
         //   newUserAccess
         // );
-        res
-          .status(201)
-          .json({ message: "User created successfully" });
+        res.status(201).json({ message: "User created successfully" });
       } catch (error) {
         console.error("Creation error:", error.message);
         res.status(500).json({ message: error.message });
@@ -286,6 +289,50 @@ function userManagementController() {
       });
     } catch (err) {
       res.status(500).json({ message: err.message });
+    }
+  };
+
+  this.resetPassword = async function (req, res) {
+    try {
+      const email = req.body.email;
+      let uniqueKey = uuidv4();
+
+      const user = await User.findOne({ where: { email } });
+      if (user) {
+        const oldToken = await Token.findOne({ where: { userId: user.id } });
+        if (oldToken) uniqueKey = oldToken.token;
+        else {
+          await Token.create({
+            userId: user.id,
+            token: uniqueKey,
+            tokenType: "reset-password",
+          });
+        }
+
+        await sendResetPasswordEmail(email, uniqueKey);
+      }
+      return res
+        .status(200)
+        .json({ message: "A verification email sent to your provided email!" });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  };
+
+  this.changePassword = async function (req, res) {
+    try {
+      const { resetKey, newPassword } = req.body;
+      const token = await Token.findOne({ where: { token: resetKey } });
+      if (token) {
+        const password = await hashPassword(newPassword);
+        await User.update({ password }, { where: { id: token.userId } });
+        token.destroy();
+      } else {
+        return res.status(400).json({ message: "token is invalid or expired" });
+      }
+      return res.status(200).json({ message: "Password reset successfully" });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
     }
   };
 }

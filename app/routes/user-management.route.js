@@ -18,7 +18,7 @@ module.exports = {
     /**
      * Create user
      */
-    app.route("/createUser").post( function (req, res) {
+    app.route("/createUser").post(function (req, res) {
       userManagementCtrl.createUser(req, res);
     });
     /**
@@ -32,6 +32,18 @@ module.exports = {
      */
     app.route("/user_token").post(verifyToken, function (req, res) {
       userManagementCtrl.userToken(req, res);
+    });
+    /**
+     * Reset Password
+     */
+    app.route("/reset-password").post(function (req, res) {
+      userManagementCtrl.resetPassword(req, res);
+    });
+    /**
+     * Change Password
+     */
+    app.route("/change-password").post(function (req, res) {
+      userManagementCtrl.changePassword(req, res);
     });
   },
 };

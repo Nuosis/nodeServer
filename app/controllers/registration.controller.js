@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { findRecordsSQL } = require('../../SQLite/functions');
+const { sendVerificationEmail } = require('../../emailTemplates/verification');
 
 function registrationController() {
     

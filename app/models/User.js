@@ -28,7 +28,8 @@ const User = sequelize.define(
     },
     email: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
+      unique: true,
     },
     verified: {
       type: DataTypes.BOOLEAN,
@@ -62,6 +63,10 @@ const User = sequelize.define(
       {
         unique: true,
         fields: ["username", "companyId"],
+      },
+      {
+        unique: true,
+        fields: ["email"],
       },
     ],
   }
