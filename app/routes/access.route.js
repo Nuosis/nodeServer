@@ -1,5 +1,5 @@
 var accessCtrl = require('../controllers/access.controller');
-const { verifyToken, refreshToken } = require('../auth/security');
+const { verifyToken } = require('../auth/security');
 
 module.exports = {
     configure: function (app) {
@@ -8,12 +8,6 @@ module.exports = {
          */
         app.route('/login').post(function (req, res) {
             accessCtrl.login(req, res);
-        });
-        /**
-         * Refresh Token
-         */
-        app.route('/refresh-token').post(function (req, res) {
-            accessCtrl.refreshToken(req, res);
         });
         /**
          * Verify user

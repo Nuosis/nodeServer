@@ -88,10 +88,7 @@ function accessController() {
             const userId = userRecord.id;
 
             const token = generateToken(userId,username,userAccess,filemakerId,companyName)
-            const refreshToken = generateRefreshToken(userId,username,userAccess,filemakerId,companyName);
-
             const accessTokenExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes
-            const refreshTokenExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
 
             await createRecordSQL('token', {
                 userId: userId,
@@ -100,14 +97,7 @@ function accessController() {
                 tokenType: 'access',
             });
 
-            await createRecordSQL('token', {
-                userId: userId,
-                token: refreshToken,
-                expiryTime: refreshTokenExpiry,
-                tokenType: 'refresh',
-            });       
-
-            return res.status(200).json({ token,refreshToken,userReset,username,userAccess,filemakerId,companyName});
+            return res.status(200).json({ token,userReset,username,userAccess,filemakerId,companyName});
         }
     }
 
@@ -151,56 +141,6 @@ function accessController() {
             sendSMS(process.env.DEV_NUMBER, `GitHub Webhook received and processed`)
             res.status(200).send('Webhook received and processed');
         });
-    }
-
-    this.refereshToken = async function (req, res) {
-        const { refreshToken } = req.body;
-
-        // Validate refresh token input
-        if (!refreshToken) {
-            return res.status(400).json({ message: 'Refresh token required' });
-        }
-
-        try {
-            // Verify the refresh token
-            const decoded = await new Promise((resolve, reject) => {
-            jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, authData) => {
-                if (err) {
-                console.error('Refresh Token Verification Error:', err);
-                reject(err);  // Token expired or invalid
-                } else {
-                resolve(authData);  // Token is valid, proceed with decoded data
-                }
-            });
-            });
-
-            // Find the refresh token in the database
-            const tokenRecord = await findRecordsSQL('token', [{ token: refreshToken, tokenType: 'refresh' }]);
-
-            if (!tokenRecord || Date.now() > tokenRecord.expiryTime) {
-                // Refresh token is invalid or expired in the database
-                return res.status(401).json({ message: 'Refresh token expired, please log in again' });
-            }
-
-            // Generate a new access token
-            const newAccessToken = generateToken(decoded.userId, decoded.apiKey, decoded.userName, decoded.access)
-            const newAccessTokenExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes
-
-            // Update access token in the database
-            await createRecordSQL('token', {
-            userId: decoded.userId,
-            token: newAccessToken,
-            expiryTime: newAccessTokenExpiry,
-            tokenType: 'access',
-            });
-
-            // Return the new access token
-            res.status(200).json({ accessToken: newAccessToken });
-
-        } catch (err) {
-            return res.status(403).json({ message: 'Invalid or expired refresh token' });
-        }
-
     }
 }
 

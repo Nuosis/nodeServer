@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const sqlite3 = require('sqlite3').verbose();
-const { createRecordSQL, findRecordsSQL } = require('../../SQLite/functions');
+const { createRecordSQL, findRecordsSQL, modifyWhereSQL } = require('../../SQLite/functions');
 
 const authPrivateKey = process.env.SECRETKEY; // Make sure this is defined in your .env file
 if (!authPrivateKey) {
@@ -30,7 +30,7 @@ async function verifyToken(req, res, next) {
         jwt.verify(bearerToken, authPrivateKey, (err, authData) => {
           if (err && err.name === 'TokenExpiredError') {
             // Token has expired according to JWT, but we will check database expiration
-            resolve(null);  // Resolve to null, meaning the token has expired
+            resolve(jwt.decode(bearerToken));
           } else if (err) {
             console.error('JWT Verification Error:', err);
             reject(err);
@@ -40,23 +40,25 @@ async function verifyToken(req, res, next) {
         });
       });
 
-      const tokenRecord = await findRecordsSQL('token', [{ token: bearerToken, tokenType: 'access' }]);
+      const tokenRecord = await findRecordsSQL('token', [{ token: bearerToken, userId: decoded.userId, tokenType: 'access' }]);
 
       if (!tokenRecord) {
         return res.status(401).json({ message: 'Invalid token' });
       }
 
-      if (Date.now() < tokenRecord.expiryTime) {
+      if (Date.now() < tokenRecord[0].expiryTime) {
         // Extend token expiration
-        const newToken = generateToken(decoded.userId, decoded.apiKey, decoded.userName, decoded.access);
         const newExpiryTime = Date.now() + 15 * 60 * 1000; // 15 minutes
+        const modifications = [
+          {
+            field: 'expiryTime',
+            where: undefined,
+            setTo: newExpiryTime,
+            setWhen: true
+          }
+        ];
+        await modifyWhereSQL('token', [{ userId: decoded.userId }], modifications);
 
-        await Token.update(
-          { token: newToken, expiryTime: newExpiryTime },
-          { where: { id: tokenRecord.id } }
-        );
-
-        res.setHeader('Authorization', `Bearer ${newToken}`);
         req.user = decoded;
 
       } else {
@@ -117,6 +119,7 @@ async function verifyToken(req, res, next) {
       // Next middleware
       next();
     } catch (err) {
+      console.log('err===',err)
       res.sendStatus(403); // Forbidden
     }
   } else {
