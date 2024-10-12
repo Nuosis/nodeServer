@@ -1,4 +1,4 @@
-var registrationCtrl = require('../controllers/registration.controller');
+var registrationCtrl = require('../controllers/shared/registration.controller');
 
 module.exports = {
     configure: function (app) {

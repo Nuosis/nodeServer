@@ -1,5 +1,5 @@
 const { generateApiKey, generateUUID, hashPassword} = require('../app/auth/security.js');
-const { createRecordSQL, findRecordsSQL, deleteRecordSQL, } = require('../SQLite/functions.js');
+const { createRecordSQL, findRecordsSQL, deleteRecordSQL, } = require('../app/SQLite/functions');
 
 async function createCompany(company) {
     console.log("createCompanyFunction");
