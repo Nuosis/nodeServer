@@ -69,6 +69,20 @@ function pandaDocController() {
         }
     };
 
+    this.pandaDocWeebhook = async function (req, res) {
+        const { event, data } = req.body;
+
+        if (event === 'document.completed') {
+            const documentId = data.id;
+            const recipient = data.recipients[0].email;
+            console.log(`Document ${documentId} signed by ${recipient}`);
+            // we can add logic (e.g., mark the cleaner as "Verified", notify admin, etc.)
+        }
+    
+        // Acknowledge webhook receipt
+        res.sendStatus(200);
+    };
+
 }
 
 module.exports = new pandaDocController();
