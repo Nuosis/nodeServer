@@ -8,7 +8,8 @@ const config = require("./config/default.json");
 const sequelize = require("./app/db");
 const { readSSLFile } = require("./app/auth/security");
 const { sendSMS } = require("./app/integrations/twilio/twilio");
-const setupWebSocketServer = require("./webServices/websocket");
+const setupWebSocketServer = require("./app/webServices/websocket");
+const path = require("path");
 
 // Initialize the Express app
 const app = express();
@@ -74,14 +75,32 @@ try {
   // Setup WebSocket server
   setupWebSocketServer(server);
 
-  // Dynamically load routes from the routes directory
-  const routesPath = require("path").join(__dirname, "/app/routes");
-  fs.readdirSync(routesPath).forEach((file) => {
-    const route = require(`./app/routes/${file}`);
-    if (typeof route.configure === "function") {
-      route.configure(app);
-    }
-  });
+  const loadRoutes = (app, routesPath) => {
+    fs.readdirSync(routesPath).forEach((file) => {
+      const filePath = path.join(routesPath, file);
+  
+      // Check if it's a directory
+      if (fs.lstatSync(filePath).isDirectory()) {
+        // Recursively load files from the directory
+        loadRoutes(app, filePath);
+      } else {
+        // Load the file if it's a JavaScript file
+        if (file.endsWith(".js")) {
+          console.log('Loading route file:', file);
+          const route = require(filePath);
+  
+          // Check if the route has a `configure` function
+          if (typeof route.configure === "function") {
+            route.configure(app);
+          }
+        }
+      }
+    });
+  };
+
+  const routesPath = path.join(__dirname, "/app/routes");
+  loadRoutes(app, routesPath);
+  
 } catch (error) {
   sendSMS(process.env.DEV_NUMBER, `Server start-up error: ${error.message}`);
   console.error(`Server start-up error: ${error.message}`);

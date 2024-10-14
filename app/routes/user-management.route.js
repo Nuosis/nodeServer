@@ -1,4 +1,4 @@
-var userManagementCtrl = require("../controllers/user-management.controller");
+var userManagementCtrl = require("../controllers/shared/user-management.controller");
 const { verifyToken } = require("../auth/security");
 
 module.exports = {
