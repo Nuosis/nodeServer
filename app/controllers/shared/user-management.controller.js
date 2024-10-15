@@ -347,6 +347,19 @@ function userManagementController() {
       res.status(500).json({ message: error });
     }
   };
+
+  this.updateUser = async function (req, res) {
+    try {
+      const userId = req.params.userId;
+      const data = req.body;
+
+      await User.update(data, { where: { id: userId } });
+
+      return res.status(200).json({ message: "User updated successfully!" });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
 }
 
 module.exports = new userManagementController();
