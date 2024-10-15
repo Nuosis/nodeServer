@@ -9,4 +9,9 @@ const sequelize = new Sequelize({
   sync: true,
 });
 
+sequelize
+  .sync({ alter: true })
+  .then(() => console.log("Models synced succefully!"))
+  .catch(() => console.log("Error syncing models!"));
+
 module.exports = sequelize;

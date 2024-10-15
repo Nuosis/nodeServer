@@ -1,6 +1,8 @@
 // models/User.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../db"); // Import your Sequelize instance
+const { USER_ROLES } = require("../utils/constants");
+const { generateUUID } = require("../../app/auth/security.js");
 
 const User = sequelize.define(
   "User",
@@ -9,6 +11,7 @@ const User = sequelize.define(
       type: DataTypes.TEXT,
       primaryKey: true,
       unique: true,
+      defaultValue: generateUUID(),
     },
     filemakerId: {
       type: DataTypes.TEXT,
@@ -31,6 +34,12 @@ const User = sequelize.define(
       allowNull: false,
       unique: true,
     },
+    role: {
+      type: DataTypes.ENUM,
+      values: Object.values(USER_ROLES),
+      allowNull: false,
+      defaultValue: USER_ROLES.CUSTOMER,
+    },
     verified: {
       type: DataTypes.BOOLEAN,
       allowNull: true,
@@ -40,11 +49,6 @@ const User = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
       defaultValue: "standard",
-    },
-    resetPassword: {
-      type: DataTypes.BOOLEAN,
-      allowNull: true,
-      defaultValue: false,
     },
     created: {
       type: DataTypes.DATE,

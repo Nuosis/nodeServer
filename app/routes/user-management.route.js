@@ -45,5 +45,11 @@ module.exports = {
     app.route("/change-password").post(function (req, res) {
       userManagementCtrl.changePassword(req, res);
     });
+    /**
+     * Register
+     */
+    app.route("/register").post(function (req, res) {
+      userManagementCtrl.register(req, res);
+    });
   },
 };
