@@ -8,9 +8,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-async function sendResetPasswordEmail(userEmail, token) {
-  const resetUrl = `http://localhost:3030/reset-password?token=${token}`;
-
+async function sendResetPasswordEmail(userEmail, resetKey) {
+  const resetUrl = `${process.env.FRONT_END_URL}/reset-password?resetKey=${resetKey}`;
   const mailOptions = {
     from: process.env.IMAP_EMAIL,
     to: userEmail,
