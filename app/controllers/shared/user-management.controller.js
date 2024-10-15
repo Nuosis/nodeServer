@@ -14,6 +14,7 @@ const { findRecordsSQL, modifyAllSQL } = require("../../SQLite/functions");
 const User = require("../../models/User");
 const Token = require("../../models/Token");
 const { sendResetPasswordEmail } = require("../../utils/email-templates");
+const { HttpStatusCode } = require("axios");
 
 function userManagementController() {
   this.createCompany = async function (req, res) {
@@ -328,11 +329,17 @@ function userManagementController() {
         await User.update({ password }, { where: { id: token.userId } });
         token.destroy();
       } else {
-        return res.status(400).json({ message: "token is invalid or expired" });
+        return res
+          .status(HttpStatusCode.BadRequest)
+          .json({ message: "token is invalid or expired" });
       }
-      return res.status(200).json({ message: "Password reset successfully" });
+      return res
+        .status(HttpStatusCode.Ok)
+        .json({ message: "Password reset successfully" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res
+        .status(HttpStatusCode.InternalServerError)
+        .json({ message: error.message });
     }
   };
 
@@ -342,9 +349,11 @@ function userManagementController() {
       const hashedPassword = await hashPassword(data.password);
       await User.create({ ...data, password: hashedPassword });
 
-      return res.status(200).json({ message: "User registered successfully!" });
+      return res
+        .status(HttpStatusCode.Ok)
+        .json({ message: "User registered successfully!" });
     } catch (error) {
-      res.status(500).json({ message: error });
+      res.status(HttpStatusCode.InternalServerError).json({ message: error });
     }
   };
 
@@ -353,11 +362,21 @@ function userManagementController() {
       const userId = req.params.userId;
       const data = req.body;
 
+      const existingUser = await User.findOne({ where: { id: userId } });
+      if (!existingUser)
+        return res
+          .status(HttpStatusCode.NotFound)
+          .json({ message: "User dont exists!" });
+
       await User.update(data, { where: { id: userId } });
 
-      return res.status(200).json({ message: "User updated successfully!" });
+      return res
+        .status(HttpStatusCode.Ok)
+        .json({ message: "User updated successfully!" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res
+        .status(HttpStatusCode.InternalServerError)
+        .json({ message: error.message });
     }
   };
 }
