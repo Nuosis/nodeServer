@@ -51,5 +51,11 @@ module.exports = {
     app.route("/register").post(function (req, res) {
       userManagementCtrl.register(req, res);
     });
+    /**
+     * Register
+     */
+    app.route("/user/:userId").put(function (req, res) {
+      userManagementCtrl.updateUser(req, res);
+    });
   },
 };
