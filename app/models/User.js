@@ -1,7 +1,7 @@
 // models/User.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../db"); // Import your Sequelize instance
-const { USER_ROLES } = require("../utils/constants");
+const { USER_ROLES, USER_STATUS } = require("../utils/constants");
 const { generateUUID } = require("../../app/auth/security.js");
 
 const User = sequelize.define(
@@ -39,6 +39,11 @@ const User = sequelize.define(
       values: Object.values(USER_ROLES),
       allowNull: false,
       defaultValue: USER_ROLES.CUSTOMER,
+    },
+    status: {
+      type: DataTypes.ENUM,
+      values: Object.values(USER_STATUS),
+      allowNull: true,
     },
     verified: {
       type: DataTypes.BOOLEAN,

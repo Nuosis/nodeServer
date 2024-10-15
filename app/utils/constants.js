@@ -4,4 +4,8 @@ module.exports = {
     CLEANER: "cleaner",
     ADMIN: "admin",
   },
+  USER_STATUS: {
+    NEW: "new",
+    ACTIVE: "active",
+  },
 };
