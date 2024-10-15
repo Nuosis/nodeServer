@@ -11,9 +11,9 @@ const {
   deTokenize,
 } = require("../../auth/security");
 const { findRecordsSQL, modifyAllSQL } = require("../../SQLite/functions");
-const User = require("../models/User");
-const Token = require("../models/Token");
-const { sendResetPasswordEmail } = require("../utils/email-templates");
+const User = require("../../models/User");
+const Token = require("../../models/Token");
+const { sendResetPasswordEmail } = require("../../utils/email-templates");
 
 function userManagementController() {
   this.createCompany = async function (req, res) {
