@@ -1,5 +1,7 @@
 var userManagementCtrl = require("../controllers/shared/user-management.controller");
 const { verifyToken } = require("../auth/security");
+const USER_SCHEMAS = require("../validation_schemas/user.schema");
+const validate = require("../integrations/joi");
 
 module.exports = {
   configure: function (app) {
@@ -36,26 +38,32 @@ module.exports = {
     /**
      * Reset Password
      */
-    app.route("/reset-password").post(function (req, res) {
+    app.route("/reset-password").post(validate(USER_SCHEMAS.resetPassword),function (req, res) {
       userManagementCtrl.resetPassword(req, res);
     });
     /**
      * Change Password
      */
-    app.route("/change-password").post(function (req, res) {
-      userManagementCtrl.changePassword(req, res);
-    });
+    app
+      .route("/change-password")
+      .post(validate(USER_SCHEMAS.changePassword), function (req, res) {
+        userManagementCtrl.changePassword(req, res);
+      });
     /**
      * Register
      */
-    app.route("/register").post(function (req, res) {
-      userManagementCtrl.register(req, res);
-    });
+    app
+      .route("/register")
+      .post(validate(USER_SCHEMAS.register), function (req, res) {
+        userManagementCtrl.register(req, res);
+      });
     /**
-     * Register
+     * Update User
      */
-    app.route("/user/:userId").put(function (req, res) {
-      userManagementCtrl.updateUser(req, res);
-    });
+    app
+      .route("/user/:userId")
+      .put(validate(USER_SCHEMAS.updateUser), function (req, res) {
+        userManagementCtrl.updateUser(req, res);
+      });
   },
 };
