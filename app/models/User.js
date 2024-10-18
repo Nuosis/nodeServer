@@ -29,6 +29,38 @@ const User = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    firstName: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    lastName: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    address: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    city: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    province: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    age: {
+      type: DataTypes.NUMBER,
+      allowNull: true,
+    },
+    contractStartDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    contractEndDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     email: {
       type: DataTypes.TEXT,
       allowNull: false,

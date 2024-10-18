@@ -1,6 +1,7 @@
 // External Imports
 require("dotenv").config();
 const { v4: uuidv4 } = require("uuid");
+const { Op } = require("sequelize");
 
 // Internal Imports
 const { createCompany, createUser } = require("../../../users/functions");
@@ -346,6 +347,17 @@ function userManagementController() {
   this.register = async function (req, res) {
     try {
       const data = req.body;
+      const user = await User.findOne({
+        where: {
+          [Op.or]: [{ email: data.email }, { username: data.username }],
+        },
+      });
+
+      if (user)
+        return res
+          .status(HttpStatusCode.BadRequest)
+          .json({ message: "User with email or username is already exists!" });
+
       const hashedPassword = await hashPassword(data.password);
       await User.create({ ...data, password: hashedPassword });
 

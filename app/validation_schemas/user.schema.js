@@ -11,6 +11,14 @@ const USER_SCHEMAS = {
       verified: Joi.boolean(),
       access: Joi.string(),
       status: Joi.string(),
+      firstName: Joi.string().required(),
+      lastName: Joi.string().required(),
+      address: Joi.string().required(),
+      city: Joi.string().required(),
+      province: Joi.string().required(),
+      age: Joi.number(),
+      contractStartDate: Joi.date(),
+      contractEndDate: Joi.date(),
     })
     .strict(),
   updateUser: Joi.object()
@@ -20,8 +28,26 @@ const USER_SCHEMAS = {
       verified: Joi.boolean(),
       access: Joi.string(),
       status: Joi.string(),
+      firstName: Joi.string(),
+      lastName: Joi.string(),
+      address: Joi.string(),
+      city: Joi.string(),
+      province: Joi.string(),
+      age: Joi.number(),
     })
-    .or("filemakerId", "companyId", "verified", "access", "status")
+    .or(
+      "filemakerId",
+      "companyId",
+      "verified",
+      "access",
+      "status",
+      "firstName",
+      "lastName",
+      "address",
+      "city",
+      "province",
+      "age"
+    )
     .strict(),
   changePassword: Joi.object()
     .keys({

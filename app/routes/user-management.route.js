@@ -1,7 +1,7 @@
 var userManagementCtrl = require("../controllers/shared/user-management.controller");
 const { verifyToken } = require("../auth/security");
 const USER_SCHEMAS = require("../validation_schemas/user.schema");
-const validate = require("../integrations/joi");
+const { validate } = require("../integrations/joi");
 
 module.exports = {
   configure: function (app) {
@@ -38,9 +38,11 @@ module.exports = {
     /**
      * Reset Password
      */
-    app.route("/reset-password").post(validate(USER_SCHEMAS.resetPassword),function (req, res) {
-      userManagementCtrl.resetPassword(req, res);
-    });
+    app
+      .route("/reset-password")
+      .post(validate(USER_SCHEMAS.resetPassword), function (req, res) {
+        userManagementCtrl.resetPassword(req, res);
+      });
     /**
      * Change Password
      */
