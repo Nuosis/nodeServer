@@ -44,12 +44,14 @@ function accessController() {
       const filemakerId = userRecord.filemakerId;
       const userId = userRecord.id;
       const username = userRecord.username;
+      const role = userRecord.role
 
       const token = generateToken(
         userId,
         username,
         userAccess,
-        email
+        email,
+        role
       );
       const accessTokenExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes
 
