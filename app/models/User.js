@@ -11,7 +11,7 @@ const User = sequelize.define(
       type: DataTypes.TEXT,
       primaryKey: true,
       unique: true,
-      defaultValue: generateUUID(),
+      defaultValue: () => generateUUID(), // Pass the function without invoking it to avoid duplicate id issue
     },
     filemakerId: {
       type: DataTypes.TEXT,
@@ -32,22 +32,27 @@ const User = sequelize.define(
     firstName: {
       type: DataTypes.TEXT,
       allowNull: false,
+      defaultValue: "",
     },
     lastName: {
       type: DataTypes.TEXT,
       allowNull: false,
+      defaultValue: "",
     },
     address: {
       type: DataTypes.TEXT,
       allowNull: false,
+      defaultValue: "",
     },
     city: {
       type: DataTypes.TEXT,
       allowNull: false,
+      defaultValue: "",
     },
     province: {
       type: DataTypes.TEXT,
       allowNull: false,
+      defaultValue: "",
     },
     age: {
       type: DataTypes.NUMBER,

@@ -4,13 +4,13 @@ const User = require('../models/User');
 
 const setupAssociations = () => {
   // Chat associations
-  Chat.belongsTo(User, { as: 'cleaner', foreignKey: 'cleanerId' });
-  Chat.belongsTo(User, { as: 'customer', foreignKey: 'customerId' });
-  Chat.hasMany(Message, { foreignKey: 'chatId' });
+  Chat.belongsTo(User, { as: 'cleaner', foreignKey: 'cleanerId', onDelete: 'CASCADE'  });
+  Chat.belongsTo(User, { as: 'customer', foreignKey: 'customerId', onDelete: 'CASCADE'  });
+  Chat.hasMany(Message, { foreignKey: 'chatId', onDelete: 'CASCADE'  });
 
   // Message associations
-  Message.belongsTo(Chat, { foreignKey: 'chatId' });
-  Message.belongsTo(User, { foreignKey: 'senderId' });
+  Message.belongsTo(Chat, { foreignKey: 'chatId', onDelete: 'CASCADE'  });
+  Message.belongsTo(User, { foreignKey: 'senderId', onDelete: 'CASCADE'  });
 };
 
 module.exports = setupAssociations;
