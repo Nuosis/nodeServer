@@ -47,8 +47,8 @@ function chatController() {
           ]
         },
         include: [
-          { model: User, as: 'cleaner', attributes: ['id', 'username'] },
-          { model: User, as: 'customer', attributes: ['id', 'username'] },
+          { model: User, as: 'cleaner', attributes: ['id', 'username', 'isOnline'] },
+          { model: User, as: 'customer', attributes: ['id', 'username', 'isOnline'] },
           { model: Message, order: [['createdAt', 'DESC']], limit: 1 }  // Get the last message in the chat
         ]
       });

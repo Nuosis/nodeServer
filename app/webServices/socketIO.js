@@ -1,11 +1,22 @@
 const socketIo = require("socket.io");
 const Message = require("../models/Message");
+const User = require('../models/User')
 
 function setupSocketIO(server) {
   const io = socketIo(server);
 
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     console.log("New client connected", socket.id);
+
+    const userId = socket.handshake.query.userId;
+
+    // Mark the user as online when they connect
+    if (userId) {
+      await User.update({ isOnline: true }, { where: { id: userId } });
+      console.log(`User ${userId} is now online`);
+
+      socket.broadcast.emit("userStatusChanged", { userId, isOnline: true });
+    }
 
     // Listen for joining a chat room
     socket.on("joinChat", (chatRoomObj) => {
@@ -46,8 +57,16 @@ function setupSocketIO(server) {
     });
 
     // Handle disconnection
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async() => {
       console.log("Client disconnected", socket.id);
+
+      if (userId) {
+        // Mark the user as offline when they disconnect
+        await User.update({ isOnline: false }, { where: { id: userId } });
+        console.log(`User ${userId} is now offline`);
+
+        socket.broadcast.emit("userStatusChanged", { userId, isOnline: false });
+      }
     });
   });
 }

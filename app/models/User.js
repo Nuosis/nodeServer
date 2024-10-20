@@ -92,6 +92,11 @@ const User = sequelize.define(
       allowNull: true,
       defaultValue: "standard",
     },
+    isOnline: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+    },
     created: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
