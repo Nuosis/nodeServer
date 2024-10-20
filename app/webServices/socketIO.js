@@ -8,7 +8,8 @@ function setupSocketIO(server) {
     console.log("New client connected", socket.id);
 
     // Listen for joining a chat room
-    socket.on("joinChat", (chatId) => {
+    socket.on("joinChat", (chatRoomObj) => {
+      const { chatId } = chatRoomObj;
       if (chatId) {
         socket.join(chatId);
         console.log(`User joined chat room: ${chatId}`);
