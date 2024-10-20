@@ -183,14 +183,13 @@ function decodeToken(token) {
 }
 
 // Function to generate a token from an apiKey
-function generateToken(userId, apiKey, userName, access) {
+function generateToken( userId, userName, access, email ) {
   try {
-      const key = apiKey || '';
+      const user_id = userId;
       const user = userName || '';
       const accessLevel = access || 'standard';
-      const user_id = userId;
       // Sign the API key
-      const token = jwt.sign({ apiKey: key, userId: user_id, userName: user, access: accessLevel }, authPrivateKey, { algorithm: 'HS256', expiresIn: '15m' });
+      const token = jwt.sign({ userId: user_id, userName: user, access: accessLevel, email }, authPrivateKey, { algorithm: 'HS256', expiresIn: '15m' });
       return token;
   } catch (error) {
       console.error("Error generating token:", error);
