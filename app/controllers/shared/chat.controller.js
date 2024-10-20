@@ -1,5 +1,7 @@
 const Chat = require("../../models/Chat");
 const Message = require("../../models/Message");
+const { Op } = require("sequelize");
+const User = require("../../models/User");
 
 function chatController() {
   this.createChat = async (req, res) => {
@@ -33,5 +35,28 @@ function chatController() {
       res.status(500).json({ error: "Failed to retrieve messages.", message: error.message });
     }
   };
+
+  this.getUserChats = async (req, res) => {
+    const { userId } = req.params;
+    try {
+      const chats = await Chat.findAll({
+        where: {
+          [Op.or]: [
+            { cleanerId: userId },  // If the user is a cleaner
+            { customerId: userId }, // If the user is a customer
+          ]
+        },
+        include: [
+          { model: User, as: 'cleaner', attributes: ['id', 'username'] },
+          { model: User, as: 'customer', attributes: ['id', 'username'] },
+          { model: Message, order: [['createdAt', 'DESC']], limit: 1 }  // Get the last message in the chat
+        ]
+      });
+      res.status(200).json(chats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to retrieve chats for the user." });
+    }
+  };  
+  
 }
 module.exports = new chatController();

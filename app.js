@@ -11,6 +11,7 @@ const { sendSMS } = require("./app/integrations/twilio/twilio");
 const setupWebSocketServer = require("./app/webServices/websocket");
 const path = require("path");
 const setupSocketIO = require("./app/webServices/socketIO");
+const setupAssociations = require("./app/associations/associations");
 
 // Initialize the Express app
 const app = express();
@@ -26,6 +27,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 app.use(morgan('dev'));
+
+setupAssociations();
 
 // Sync the models with the database
 sequelize
