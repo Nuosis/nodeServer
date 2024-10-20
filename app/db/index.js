@@ -12,6 +12,6 @@ const sequelize = new Sequelize({
 sequelize
   .sync({ alter: true })
   .then(() => console.log("Models synced succefully!"))
-  .catch(() => console.log("Error syncing models!"));
+  .catch((e) => console.log("Error syncing models!", e));
 
 module.exports = sequelize;

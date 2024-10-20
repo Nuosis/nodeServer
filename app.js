@@ -10,6 +10,7 @@ const { readSSLFile } = require("./app/auth/security");
 const { sendSMS } = require("./app/integrations/twilio/twilio");
 const setupWebSocketServer = require("./app/webServices/websocket");
 const path = require("path");
+const setupSocketIO = require("./app/webServices/socketIO");
 
 // Initialize the Express app
 const app = express();
@@ -73,7 +74,8 @@ try {
   }
 
   // Setup WebSocket server
-  setupWebSocketServer(server);
+  // setupWebSocketServer(server);
+  setupSocketIO(server)
 
   const loadRoutes = (app, routesPath) => {
     fs.readdirSync(routesPath).forEach((file) => {
